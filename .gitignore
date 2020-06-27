@@ -1,0 +1,8 @@
+# Node modules #
+node_modules
+
+# personal stuff #
+notes
+
+# package-lock #
+package-lock.json
