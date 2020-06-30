@@ -5,7 +5,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const port = 8080;
-const db = require('./db');
+// const db = require('./db/db'); 
+const usersDb = require('./db/users');
+const hikesDb = require('./db/hikes');
+const trailheadsDb = require('./db/trailheads');
+const listsDb = require('./db/lists');
+
 const cors = require('cors');
 const whitelist = ['http://localhost:8080']
 const corsOptions = {
@@ -45,23 +50,26 @@ app.use(
   addHikeToList
 */
 
-app.get('/', db.getHikes);
-app.get('/hikes', db.getHikes);
-app.get('/hikes/:id', db.getHikeByHikeId);
-app.post('/hikes', db.createHike);
-app.put('/hikes/:id', db.updateHike);
-app.delete('/hikes/:id', db.deleteHikeByHikeId);
+app.get('/', hikesDb.getHikes);
+app.get('/hikes', hikesDb.getHikes);
+app.get('/hikes/:id', hikesDb.getHikeByHikeId);
+app.post('/hikes', hikesDb.createHike);
+app.put('/hikes/:id', hikesDb.updateHike);
+app.delete('/hikes/:id', hikesDb.deleteHikeByHikeId);
+
 // todo: add user stuff
-app.get('/user', db.getUser); // this should actually be a login thing i think
-app.get('/user/:id', db.getUserById);
-app.put('/user/:id', db.updateUser);
-app.post('/user', db.createUser);
-app.delete('/user/:id', db.deleteUser);
+app.get('/user', usersDb.getAllUsers); // this should have limited access - only admin/developer
+app.get('/user/:id', usersDb.getUserById);
+app.put('/user/:id', usersDb.updateUser);
+app.post('/user', usersDb.createUser);
+app.delete('/user/:id', usersDb.deleteUser);
 
 // todo: add routes for lists
-app.get('/user/:id/lists', db.getListsByUser);
-app.post('/user/:id/lists', db.createList);
-app.delete('/user/:id/list/:id', db.deleteList); 
+app.get('/user/:id/lists', listsDb.getListsByUser);
+app.post('/user/:id/lists', listsDb.createList);
+app.delete('/user/:id/list/:id', listsDb.deleteList); 
+
+// todo: add routes for trailheads
 
 app.listen(port, () => {
   console.log(`App running on port ${port}. GO ME!!`);
