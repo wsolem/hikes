@@ -32,7 +32,7 @@ const deleteList = (req, res) => {
   // for now it is ok i think... will likely have to update the database 
 }
 
-const deleteHikeFromList = (req, res) => {
+const removeHikeFromList = (req, res) => {
   //
 }
 
@@ -44,6 +44,6 @@ module.exports = {
   getListsByUser,
   createList,
   deleteList,
-  deleteHikeFromList,
+  removeHikeFromList,
   addHikeToList,
 }
