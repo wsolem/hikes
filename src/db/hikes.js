@@ -2,13 +2,13 @@
 
 const knex = require('./dbSetup');
 
-const ensureArray = (field) => {
-  if (typeof field === 'string') {
-    field = [field];
-  }
-  return field;
-}
-const { v4: uuidv4 } = require('uuid');
+// const ensureArray = (field) => {
+//   if (typeof field === 'string') {
+//     field = [field];
+//   }
+//   return field;
+// }
+// const { v4: uuidv4 } = require('uuid');
 
 const getHikesByCategory = (req, res, category) => {};
 
@@ -25,19 +25,14 @@ const getHikesByCategory = (req, res, category) => {};
     tags: string || string[] --> string[]
     */
   // maybe i do want to get everything?
-  const getHikes = (req, res) => {
-    knex('hikes').select('name', 'distance', 'difficulty', 'hikeid').orderBy('name')
-      .then(hikes => {
-        if(hikes) {
-          // update succeeded
-          console.log(hikes)
-          res.status(200).json(hikes);
-        } else {
-          // update failed - throw error?
-        }
-      }).catch(err => {
-        res.send(err); // need something better
-      })
+  const allHikes = () => {
+
+    // todo: this is just the get from database and return;
+    // the err should be caught and handled with an error handler - but in service layer
+    // and anyting with req/res shoud be jhandled in service layer
+    // and this function should be called by service layer
+    // and this is true of all g-d functions in hikes, lists, trailheads, and users
+    return knex('hikes').select('name', 'distance', 'difficulty', 'hikeid').orderBy('name');
   }
   
   const getHikeByHikeId = (req, res) => {
@@ -53,8 +48,8 @@ const getHikesByCategory = (req, res, category) => {};
   }
   
   // todo: take out the ensureArray functino - that shoudl be handled externally
-  const createHike = (req, res) => {
-    let { date, difficulty, distance, hiked, name, parks, regions, tags, trailheads } = req.body;
+  const creatOneHike = (hike, res) => {
+    let { date, difficulty, distance, hiked, name, parks, regions, tags, trailheads } = hike;
     const hikeid = uuidv4();
     regions = ensureArray(regions);
     parks = ensureArray(parks);
@@ -73,12 +68,55 @@ const getHikesByCategory = (req, res, category) => {};
       trailheads,
       hikeid
     }).then(result => {
+      console.log(result)
       if (result) {
+        console.log(result);
         res.status(201).send(`Hike added with ID: ${results.hikeid}`);
       } else {
         // handle error
       }
     }).catch(err => res.send(err));
+  }
+  // ok, what do i want to do with return????
+  const createHike = (req, res) => {
+    // console.log('hikes!!!!', Array.isArray(req.body), req.body);
+    let hikes = req.body;
+    if (Array.isArray(hikes)) {
+      // console.log('WTF')
+      let hike;
+      for (let i = 0; i < hikes.length; i++) {
+        console.log(hike)
+        hike = hikes[i];
+        creatOneHike(hike, res);
+      }
+    } else {
+      createHike(hikes, res);
+    }
+    // let { date, difficulty, distance, hiked, name, parks, regions, tags, trailheads } = req.body;
+    // const hikeid = uuidv4();
+    // regions = ensureArray(regions);
+    // parks = ensureArray(parks);
+    // trailheads = ensureArray(trailheads);
+    // tags = ensureArray(tags);
+  
+    // knex('hikes').insert({
+    //   date,
+    //   difficulty,
+    //   distance,
+    //   hiked,
+    //   name,
+    //   parks,
+    //   regions,
+    //   tags,
+    //   trailheads,
+    //   hikeid
+    // }).then(result => {
+    //   if (result) {
+    //     res.status(201).send(`Hike added with ID: ${results.hikeid}`);
+    //   } else {
+    //     // handle error
+    //   }
+    // }).catch(err => res.send(err));
   }
 
   
@@ -106,7 +144,7 @@ const getHikesByCategory = (req, res, category) => {};
 
   // create object to be returned and pass in knex
   module.exports = {
-    getHikes,
+    allHikes,
     getHikeByHikeId,
     createHike,
     updateHike,

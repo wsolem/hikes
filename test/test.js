@@ -1,4 +1,6 @@
 'use strict';
+
+// todo: refactor to put all service layer tests (eg, responses) into their own files
 /*
 Starting with a to do list for testing
 
@@ -39,27 +41,142 @@ also really need to separate out the tests into their own files based on
 - hikes, users, trailheads, lists
 - helper functions 
 */
+process.env.NODE_ENV = 'test';
 
-const assert = require('assert');
+var chai = require('chai');
+var should = chai.should();
+var chaiHttp = require('chai-http');
+var server = require('../server');
+chai.use(chaiHttp);
 
+// blerg
+
+const hikesDb = require('../db/hikes');
+const hikes = require('../db/hikes');
+// const assert = require('assert');
+// const expect = require('chai').expect;
+// const should = require('chai').should();
+// need to includ should library i think
 // the fuck? 
 // const { deepStrictEqual } = require('assert');
 // const { delete } = require('../db/dbSetup');
 
+// need to include dbSetup
+// const hikes = [
+//   {
+//     name: 'Mountain Top',
+//     distance: 3,
+//     difficulty: 3
+//   },
+//   {
+//     name: 'Beachside',
+//     distance: 2,
+//     difficulty: 2
+//   },
+//   {
+//     name: 'River Walk',
+//     distance: 3,
+//     difficulty: 1
+//   }
+// ];
+let res = {
+  send: (data) => data,
+  status: (data) => {
+    this.status = data;
+    this.json = (hikes) => hikes;
+    return this;
+  }
+};
+let req = {
+
+};
+// // const debSetup = () => {
+
+// // }
+
+// // hmm but the issue sort of is that this is already seeded, so is this even necessary??
+// const hikesSetup = () => {
+//   // i suppose I 
+
+//   // create a bunch of hikes
+//   // name: string
+//   // regions: string || string[] --> string[]
+//   // distance: number
+//   // hiked: boolean
+//   // date: date
+//   // difficulty: integer
+//   // hikeid: null --> uuid
+//   // parks: string || string[] --> string[]
+//   // trailheads: string || string[] --> string[]
+//   // tags: string || string[] --> string[]
+  
+//   // i want to create and destroy a test database
+//   let req = {
+//     body: hikes
+//   };
+//   // let res = {};
+
+//   // for each post
+//   // for(let i = 0; i < hikes.length; i++) {
+//   hikesDb.createHike(req, res);
+//   // }
+// };
+
+// The reason I'm having a hard time is cause I'm doing the functions wrong!!!!!!!!
+// i need to separate out the database from the return
 
 // Hikes Tests
 describe('Hikes', () => {
   before('set up all hikes ', () => {
-
+    // let setupHikes = hikesSetup();
+    // console.log('setup hikes ', setupHikes);
+    //
   });
 
   after('tear down hikes', () => {
 
   });
 
-  describe('#getHikes()', () => {
-    it('should get all hikes', () => {
+  describe.only('#getHikes()', () => {
+    let allHikes;
+    // let allHikesResponse;
+    // let req = {};
+    before('get all hikes and save to an object', (done) => {
+      allHikes = hikesDb.getHikes(req,res);
+      // should.exist(allHikes);
+      // allHikes.should.be.an('array');
+      console.log('ALL HIKES!!!!!!!!!!!!!!!!!!!!!!!!', allHikes)
+      done();
 
+      /*
+      chai.request(server)
+    .get('/api/v1/shows')
+    .end(function(err, res) {
+    res.should.have.status(200) */
+
+
+    // ACtually, this should be in services not databse layer
+      // chai.request(server)
+      //   .get('/hikes')
+      //   .end((err, response) => {
+      //     should.not.exist(err);
+      //     should.exist(response);
+      //     // response.should.have.status(200);
+      //     allHikesResponse = response;
+      //     allHikes = response.body;
+      //     done();
+      //   });
+    });
+
+    // should be services not db layer
+    // it('should have 200 response', (done) => {
+    //   allHikesResponse.should.have.status(200);
+    //   done();
+    // })
+    it('should get all hikes', (done) => {
+      // console.log(allHikes);
+      allHikes.should.be.an('array');
+      done();
     });
   });
 

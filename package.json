@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "chai-http": "^4.3.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "knex": "^0.21.1",
@@ -11,11 +12,17 @@
     "uuid": "^8.1.0"
   },
   "devDependencies": {
-    "mocha": "^8.0.1"
+    "chai": "^4.2.0",
+    "faker": "^4.1.0",
+    "mocha": "^8.0.1",
+    "sinon": "^9.0.2"
   },
   "scripts": {
     "test": "mocha",
-    "start": "node server.js"
+    "start": "node server.js",
+    "init:database": "npx knex migrate:latest --env test",
+    "test:seed": "npx knex seed:run --env test",
+    "setup:db": "npm run init:database && npm run test:seed"
   },
   "keywords": [],
   "author": "Willow Solem",

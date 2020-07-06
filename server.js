@@ -71,8 +71,8 @@ app.delete('/user/:id/list/:id', listsDb.deleteList);
 
 // todo: add routes for trailheads
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`App running on port ${port}. GO ME!!`);
 });
 
-
+module.exports = server;
