@@ -43,215 +43,252 @@ also really need to separate out the tests into their own files based on
 */
 process.env.NODE_ENV = 'test';
 
-var chai = require('chai');
-var should = chai.should();
-var chaiHttp = require('chai-http');
-var server = require('../server');
-chai.use(chaiHttp);
+// var chai = require('chai');
+// // var should = chai.should();
+// var chaiHttp = require('chai-http');
+// // var server = require('../server');
+// chai.use(chaiHttp);
 
-// blerg
+const hikesDb = require('../src/db/hikes');
+const helperFs = require('./helperFunctions');
+const hikes = require('../src/db/hikes');
+// const { deleteHike } = require('../src/app/hikes');
+// const { on, update } = require('../knex');
+// const { updateHike, allHikes } = require('../src/db/hikes');
 
-const hikesDb = require('../db/hikes');
-const hikes = require('../db/hikes');
-// const assert = require('assert');
-// const expect = require('chai').expect;
-// const should = require('chai').should();
-// need to includ should library i think
-// the fuck? 
-// const { deepStrictEqual } = require('assert');
-// const { delete } = require('../db/dbSetup');
+// TODO: extract out 
 
-// need to include dbSetup
-// const hikes = [
-//   {
-//     name: 'Mountain Top',
-//     distance: 3,
-//     difficulty: 3
-//   },
-//   {
-//     name: 'Beachside',
-//     distance: 2,
-//     difficulty: 2
-//   },
-//   {
-//     name: 'River Walk',
-//     distance: 3,
-//     difficulty: 1
+// // I'm sure I can come up with something prettier here
+// const compareArrays = (arr1, arr2) => {
+//   for (let i = 0; i < arr1.length; i++) {
+//     if (arr1[i] !== arr2[i]) {
+//       return false;
+//     }
 //   }
-// ];
-let res = {
-  send: (data) => data,
-  status: (data) => {
-    this.status = data;
-    this.json = (hikes) => hikes;
-    return this;
-  }
-};
-let req = {
+//   return true;
+// }
 
-};
-// // const debSetup = () => {
-
-// // }
-
-// // hmm but the issue sort of is that this is already seeded, so is this even necessary??
-// const hikesSetup = () => {
-//   // i suppose I 
-
-//   // create a bunch of hikes
-//   // name: string
-//   // regions: string || string[] --> string[]
-//   // distance: number
-//   // hiked: boolean
-//   // date: date
-//   // difficulty: integer
-//   // hikeid: null --> uuid
-//   // parks: string || string[] --> string[]
-//   // trailheads: string || string[] --> string[]
-//   // tags: string || string[] --> string[]
+// const isHike = (hikeObject, hikeStyle) => {
+//   const keys = (Object.getOwnPropertyNames(hikeObject)).sort();
+//   // lazy, put it in order that it is in tabe and sorting
+//   const expectedKeys = hikeStyle === 'allhikes' ?
+//     [ 'name', 'distance', 'difficulty', 'hikeid' ].sort() : 
+//     [ 'name', 'distance', 'hiked', 'date', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags'].sort();
   
-//   // i want to create and destroy a test database
-//   let req = {
-//     body: hikes
-//   };
-//   // let res = {};
+//   return (keys.length === expectedKeys.length) && helperFs.compareArrays(keys, expectedKeys);
+// }
 
-//   // for each post
-//   // for(let i = 0; i < hikes.length; i++) {
-//   hikesDb.createHike(req, res);
-//   // }
-// };
+const hiddenHikeFields = [ 'id' ]; // i'm sure i'll find more to add here
+// // um i can definitly pretty this mess up
+// const hasHiddenFields = (hikeObject, hiddenHikeFields) => {
+//   const keys = (Object.getOwnPropertyNames(hikeObject)).sort();
 
-// The reason I'm having a hard time is cause I'm doing the functions wrong!!!!!!!!
-// i need to separate out the database from the return
+//   for(let kitr = 0; kitr < keys.length; kitr++) {
+//     for(let hitr = 0; hitr < keys.length; hitr++) {
+//       if(keys[kitr] === hiddenHikeFields[hitr]) {
+//         return true;
+//       }
+//     }
+//   }
+//   return false;
+//   // keys.forEach((key) => {
+//   //   hiddenHikeFields.forEach((field) => {
+//   //     if (key === field) {
+//   //       return true;
+//   //     }
+//   //   });
+//   // });
+//   // return false;
+// }
+
+// // update to be more general
+// const hikesMatch = (hikeA, hikeB) => {
+//   const keys = (Object.getOwnPropertyNames(hikeA)).sort();
+//   let key;
+//   let hikeAField;
+//   let hikeBField;
+//   for(let itr = 0; itr < keys.length; itr++) {
+//     key = keys[itr];
+//     hikeAField = hikeA[key];
+//     hikeBField = hikeB[key];
+//     if (key === 'difficulty' || key === 'distance') {
+//       hikeBField = Number(hikeBField);
+//       hikeAField = Number(hikeAField);
+//     }
+//     if (Array.isArray(hikeAField) && Array.isArray(hikeBField)) {
+//       if (!helperFs.compareArrays(hikeAField, hikeBField)) {
+//         return false;
+//       }
+//     } else if (hikeAField !== hikeBField) {
+//       return false;
+//     }
+//   }
+//   return true;
+// }
 
 // Hikes Tests
 describe('Hikes', () => {
-  before('set up all hikes ', () => {
-    // let setupHikes = hikesSetup();
-    // console.log('setup hikes ', setupHikes);
-    //
-  });
+  // ok, before and after might be handled in the pre-test script
+  // before('set up all hikes ', () => {
+  //   // let setupHikes = hikesSetup();
+  //   // console.log('setup hikes ', setupHikes);
+  //   //
+  // });
 
-  after('tear down hikes', () => {
+  // after('tear down hikes', () => {
 
-  });
+  // });
 
-  describe.only('#getHikes()', () => {
+  describe('#allHikes', () => {
     let allHikes;
-    // let allHikesResponse;
-    // let req = {};
+
     before('get all hikes and save to an object', (done) => {
-      allHikes = hikesDb.getHikes(req,res);
-      // should.exist(allHikes);
-      // allHikes.should.be.an('array');
-      console.log('ALL HIKES!!!!!!!!!!!!!!!!!!!!!!!!', allHikes)
-      done();
-
-      /*
-      chai.request(server)
-    .get('/api/v1/shows')
-    .end(function(err, res) {
-    res.should.have.status(200) */
-
-
-    // ACtually, this should be in services not databse layer
-      // chai.request(server)
-      //   .get('/hikes')
-      //   .end((err, response) => {
-      //     should.not.exist(err);
-      //     should.exist(response);
-      //     // response.should.have.status(200);
-      //     allHikesResponse = response;
-      //     allHikes = response.body;
-      //     done();
-      //   });
+      hikesDb.allHikes().then((hikes) => {
+        allHikes = hikes;
+        done();
+      });
     });
 
-    // should be services not db layer
-    // it('should have 200 response', (done) => {
-    //   allHikesResponse.should.have.status(200);
-    //   done();
-    // })
-    it('should get all hikes', (done) => {
-      // console.log(allHikes);
+    it('should be an array of hikes', (done) => {
       allHikes.should.be.an('array');
+      allHikes.forEach(hike => (helperFs.isHike(hike, 'allhikes')).should.equal(true));
       done();
     });
   });
 
-  describe('#getHikeByHikeId()', () => {
-    before('get the hike and save for tests', () => {
-
+  describe('#getHikeByHikeId', () => {
+    let hikeId;
+    let oneHike;
+    let hikesArr;
+    before('get all hikes to get id for one', (done) => {
+      hikesDb.allHikes().then((hikes) => {
+        hikeId = hikes[0].hikeid;
+        done();
+      });
+    });
+    before('get hike for tests', () => {
+      hikesDb.selectHikeByHikeId(hikeid).then((hikes) => {
+        hikesArr = hikes;
+        oneHike = hikes[0];
+        done();
+      });
     });
 
-    it('should return one hike', () => {
-
+    it('should return one hike', (done) => {
+      hikesArr.length.should.equal(1);
+      done();
     });
     // Note: update this to include all the correct details
-    it('should contain all hike details', () => {
-
+    it('should contain all hike details', (done) => {
+      (helperFs.isHike(oneHike)).should.equal(true);
+      done();
     });
     // note: update to specifiy which details are not included
     it('should not contain wrong details', () => {
-
+      helperFs.hasHiddenFields(oneHike, hiddenHikeFields).should.equal(false);
     });
   });
 
   // test variations of hike objects - certain details added, missing, etc.
-  describe('#createHike()', () => {
-    before('get all hikes as a baseline', () => {
+  describe('#createHike', () => {
+    let allHikes;
+  
+    before('get all hikes as a baseline', (done) => {
       // make an assertion about the hikes, make note of the number for later tests
+      hikesDb.allHikes().then((hikes) => {
+        allHikes = hikes;
+        done();
+      });
     });
     describe('formatted correctly', () => {
-      before('create hike correctly and save return object', () => {
-
+      const newHike = {
+        name: 'New Hike',
+        distance: 4,
+        difficulty: 2,
+        hikeid: '999999'
+      };
+      let saveResponse;
+      before('create hike correctly and save return object', (done) => {
+        hikesDb.saveHike(newHike).then((hikes) => {
+          saveResponse = hikes;
+          done();
+        });
       });
 
-      after('delete the recently added hike', () => {
-
+      after('delete the recently added hike', (done) => {
+        hikesDb.deleteHikeByHikeId(newHike.hikeid).then(done());
       });
-      // double check what the response is
-      it('should get a 2XX response', () => {
+      // put this in service layer tests
+      // // double check what the response is
+      // it('should get a 2XX response', () => {
 
-      });
-      // double check about the specific values returned
-      it('should return hike object', () => {
+      // });
+      // todo: move this test to service layer tests
+      // it('should have a hikeid added', () => {
 
-      });
+      // });
 
-      it('should have a hikeid added', () => {
+      // test what i get back? maybe saveResponse is not an error?
 
-      });
-
-      it('separate get hike call with new hike id should return hike', () => {
-
+      it('should return new hike when get is called ', (done) => {
+        hikesDb.selectHikeByHikeId(newHike.hikeid).then((hike) => {
+          // hike is an array
+          hike.length.should.equal(1);
+          helperFs.hikesMatch(newHike, hike[0]).should.equal(true);
+          done();
+        })
       });
       
-      it('call for all hikes should return new hike', () => {
+      it('call for all hikes should return new hike', (done) => {
         // test that the number of hikes is one larger than from before
         // test that the name or hikeid matches new hike in list
+        let allHikesPlus;
+        hikesDb.allHikes().then(hikes => {
+          allHikesPlus = hikes;
+          (allHikesPlus.length).should.equal(allHikes.length + 1);
+          let foundHike = allHikesPlus.filter((hike) => {
+            return hike.hikeid === newHike.hikeid;
+          });
+          helperFs.hikesMatch(newHike, foundHike[0]);
+          done();
+        })
       });
     });
     // do i need to do all the required fields missing?
-    describe('missing a field', () => {
-      before('create hike incorrectly and save return object', () => {
+    // TODO: moved this to service layer
+    // describe.only('missing a field', () => {
+    //   const hikeWithMissingField = {
+    //     name: 'Hike wiht missing field',
+    //     difficulty: 2,
+    //     hikeid: '888888'
+    //   };
+    //   let saveResponse;
+    //   before('create hike incorrectly and save return object', (done) => {
+    //     hikesDb.saveHike(hikeWithMissingField).then((hikes) => {
+    //       console.log('hikes', hikes);
+    //       saveResponse = hikes;
+    //       done();
+    //     });
+    //   });
 
-      });
-      // check response - 
-      it('should fail to save', () => {
+    //   after('delete the recently added hike', (done) => {
+    //     hikesDb.deleteHikeByHikeId(hikeWithMissingField.hikeid).then(done());
+    //   });
 
-      });
+    //   // check response - 
+    //   it('should fail to save', () => {
+    //     console.log('!!!!!!!!!!!',saveResponse);
+    //   });
 
-      it('response message should indicate failure to save', () => {
+    //   it('response message should indicate failure to save', () => {
 
-      });
+    //   });
 
-      it('call for all hikes should not return malformed hike', () => {
-        // test that the number of hikes is same as before
-        // test that there is not a name with teh same hike
-      });
-    });
+    //   it('call for all hikes should not return malformed hike', () => {
+    //     // test that the number of hikes is same as before
+    //     // test that there is not a name with teh same hike
+    //   });
+    // });
     /*
     Some other things to test:
       Creation:
@@ -261,99 +298,169 @@ describe('Hikes', () => {
 
   });
 
-  describe('#updateHike()', () => {
-    before('get hike to update as a baseline', () => {
+  describe('#updateHike', () => {
+    let oneHike;
 
+    before('get hike to update as a baseline', (done) => {
+      hikesDb.allHikes().then((hikes) => {
+        hikesDb.selectHikeByHikeId(hikes[0].hikeid).then((hike) => {
+          oneHike = hike[0];
+          done();
+        });
+      });
     });
     
     describe('update one valid field', () => {
-      
-      before('update one field of hike object and save', () => {
+      let updatedHike;
+      let updatefields = {
+        distance: 10
+      }
+      before('update one field of hike object and save', (done) => {
         // make sure to save the field that is going to be changed in order to change back
+        hikesDb.updateHike(oneHike.hikeid, updatefields).then(() => {
+          hikesDb.selectHikeByHikeId(oneHike.hikeid).then((hikes) => {
+            updatedHike = hikes[0];
+            done();
+          });
+        });
       });
-      after('change the field of hike back to original', () => {
-
+      after('change the field of hike back to original', (done) => {
+        hikesDb.updateHike(oneHike.hikeid, { distance: oneHike.distance }).then(() => {
+          done();
+        });
       });
       // update only one field, get 
-      it('should return hike object with updated field', () => {
-        // only testing that there is a returned hike object and that it has changed field
+      it('should have updated field in hike', (done) => {        
+        (updatedHike.distance).should.not.equal(oneHike.distance);
+        (Number(updatedHike.distance)).should.equal(updatefields.distance);
+        done();
       });
-      it('should match original other than new field', () => {
-
+      it('should have other fields match original', (done) => {
+        (updatedHike.hikeid).should.equal(oneHike.hikeid);
+        (updatedHike.difficulty).should.equal(oneHike.difficulty);
+        done();
       });
       // what else to check?
     });
 
     describe('update one non-existant field', () => {
-      before('update field and save response to object', () => {
+      let updateResponse;
+      let updatedHikeNonField;
+      let updatefields = {
+        derpster: 10
+      }
+      before('update one field of hike object and save', (done) => {
+        // make sure to save the field that is going to be changed in order to change back
+        hikesDb.updateHike(oneHike.hikeid, updatefields).then((updateRes) => {
+          updateResponse = updateRes;
+          hikesDb.selectHikeByHikeId(oneHike.hikeid).then((hikes) => {
+            updatedHikeNonField = hikes[0];
+            done();
+          });
+        });
 
       });
+      // after('change the field of hike back to original', (done) => {
+      //   hikesDb.updateHike(oneHike.hikeid, { distance: oneHike.distance }).then(() => {
+      //     done();
+      //   });
+      // });
       
-      it('should fail to save', () => {
-
-      });
-      // should say field doesn't exist
-      it('should have error message', () => {
-
+      it('should fail to save with error message', (done) => {
+        updateResponse.should.be.an.instanceOf(Error);
+        updateResponse.message.should.equal('failed to update');
+        done();
       });
 
-      it('should not change hike object', () => {
-        // get hike object and compare to one saved in before
+      it('should not change hike object', (done) => {
+        (helperFs.hikesMatch(updatedHikeNonField, oneHike)).should.equal(true);
+        done();
       });
     });
 
-    describe('update one protected field', () => {
-      before('update field and save response to object', () => {
+    // this should be service layer i think
+    // describe('update one protected field', () => {
+    //   before('update field and save response to object', () => {
 
-      });
+    //   });
       
-      it('should fail to save', () => {
+    //   it('should fail to save', () => {
 
-      });
-      // specific to protected field
-      it('should have error message', () => {
+    //   });
+    //   // specific to protected field
+    //   it('should have error message', () => {
 
-      });
+    //   });
 
-      it('should not change hike object', () => {
-        // get hike object and compare to one saved in before
-      });
-    });
+    //   it('should not change hike object', () => {
+    //     // get hike object and compare to one saved in before
+    //   });
+    // });
 
+    // todo: move to service layer
     describe('update multiple valid fields', () => {
-      before('update a hike object', () => {
-        // make sure to save fields that wll be changed to set back to original in after
+      let updatedHike;
+      let updatefields = {
+        distance: 12,
+        difficulty: 1
+      }
+      before('update one field of hike object and save', (done) => {
+        // make sure to save the field that is going to be changed in order to change back
+        hikesDb.updateHike(oneHike.hikeid, updatefields).then(() => {
+          hikesDb.selectHikeByHikeId(oneHike.hikeid).then((hikes) => {
+            updatedHike = hikes[0];
+            done();
+          });
+        });
       });
-   
-      after('restore hike object', () => {
-
+      after('change the field of hike back to original', (done) => {
+        hikesDb.updateHike(oneHike.hikeid, { distance: oneHike.distance, difficulty: oneHike.difficulty }).then(() => {
+          done();
+        });
       });
 
-      it('should return hike object with new fields changed', () => {
-
+      it('should return hike object with new fields changed', (done) => {
+        (helperFs.hikesMatch(oneHike, updatedHike)).should.equal(false);
+        Number(updatedHike.distance).should.equal(updatefields.distance);
+        Number(updatedHike.difficulty).should.equal(updatefields.difficulty);
+        done();
       });
 
-      it('should match original for other fields', () => {
-
+      it('should match original for other fields', (done) => {
+        (updatedHike.name).should.equal(oneHike.name);
+        (updatedHike.hikeid).should.equal(oneHike.hikeid);
+        done();
       });
       // what else??
     });
 
     describe('update multiple fields with one invalid', () => {
-      before('update object call', () => {
-
+      let updateResponse;
+      let updatedHikeNonFields;
+      let updatefields = {
+        distance: 5,
+        derpster: 10
+      }
+      before('update one field of hike object and save', (done) => {
+        // make sure to save the field that is going to be changed in order to change back
+        hikesDb.updateHike(oneHike.hikeid, updatefields).then((updateRes) => {
+          updateResponse = updateRes;
+          hikesDb.selectHikeByHikeId(oneHike.hikeid).then((hikes) => {
+            updatedHikeNonFields = hikes[0];
+            done();
+          });
+        });
       });
 
-      it('should fail to save', () => {
-
-      });
-      // should note which field is incorrect
-      it('should have error message', () => {
-
+      it('should fail to save with error message', (done) => {
+        updateResponse.should.be.an.instanceOf(Error);
+        updateResponse.message.should.equal('failed to update');
+        done();
       });
 
-      it('should not change hike object', () => {
-        // get hike object and compare to one saved in before
+      it('should not change hike object', (done) => {
+        (helperFs.hikesMatch(updatedHikeNonFields, oneHike)).should.equal(true);
+        done();
       });
     });
     // for invalid fields - also need to test for invlaid input for each field
@@ -361,49 +468,81 @@ describe('Hikes', () => {
 
   });
 
-  describe('#deleteByHikeId()', () => {
-    before('get hike object', () => {
-      // saved to restore later - 
+  describe('#deleteByHikeId', () => {
+    let allHikes;
+    let originalHike;
+    let originalHikeId;
+    before('get all hikes', (done) => {
+      hikesDb.allHikes().then((hikes) => {
+        allHikes = hikes;
+        originalHikeId = allHikes[0].hikeid;
+        done();
+      });
     });
-    
-    before('get all hikes for number', () => {
 
+    before('get hike object', (done) => {
+      hikesDb.selectHikeByHikeId(originalHikeId)
+        .then((hikes) => {
+          originalHike = hikes[0];
+          done();
+        });
     });
-
+    //todo: add test in service layer that checks if the hike exists
     describe('non-existant hike id', () => {
-      before('generate new id and try to delete', () => {
-
+      const fakeHikeId = 'xxxxxx';
+      before('try to delete hike with fake id and save response', (done) => {
+        hikesDb.deleteHikeByHikeId(fakeHikeId).then(() => {
+          done();
+        });
       });
 
-      it('should return error', () => {
-
-      });
-
-      it('should be same amount of hikes', () => {
-        // get all hikes for number and compare to oen from before
+      it('should be same amount of hikes', (done) => {
+        hikesDb.allHikes().then((hikes) => {
+          (hikes.length).should.equal(allHikes.length);
+          let hikesHikeIds = hikes.map((hike) => hike.hikeid);
+          let allHikesHikeIds = allHikes.map((hike) => hike.hikeid);
+          (helperFs.compareArrays(hikesHikeIds.sort(), allHikesHikeIds.sort())).should.equal(true);
+          done();
+        });
       });
       // any other tests?
     });
 
     describe('valid hike id', () => {
-      before('delete call ', () => {
-        // use hike id gotten from before above
+      let deleteResponse;
+      before('delete call ', (done) => {
+        hikesDb.deleteHikeByHikeId(originalHikeId).then((res) => {
+          deleteResponse = res;
+          done();
+        });
       });
 
-      after('restore hike', () => {
+      after('restore hike', (done) => {
+        hikesDb.saveHike(originalHike).then((hike) => {
+          done();
+        })
         // in case there are other tests later
       });
 
-      it('should get back hike object', () => {
-        // should return the hike object that was deleted - double check about which fields
+      it('should not get error', (done) => {
+        deleteResponse.should.not.be.instanceOf(Error);
+        done();
       });
 
-      it('should not be able to get hike anymore', () => {
-        // request with saved hike id should return an error
+      it('should not be able to get hike anymore', (done) => {
+        hikesDb.selectHikeByHikeId(originalHikeId).then((res) => {
+          res.length.should.equal(0);
+          done();
+        });
       });
 
-      it('should no longer be in all hikes', () => {
-        // erquest for all hikes should be one shorter
+      it('should no longer be in all hikes', (done) => {
+        hikesDb.allHikes().then((hikes) => {
+          (hikes.length).should.equal((allHikes.length - 1));
+          let deletedHike = hikes.filter((hike) => hike.hikeid === originalHikeId);
+          (deletedHike.length).should.equal(0);
+          done();
+        });
       });
       // i feel like there should be more tests
     });
@@ -989,11 +1128,3 @@ describe('Lists', () => {
     such as change owner, add user, add comments
   */
 });
-
-// describe('Array', function () {
-//   describe('#indexOf()', function () {
-//     it('should return -1 when the value is not present', function () {
-//       assert.equal([1, 2, 3].indexOf(4), -1);
-//     });
-//   });
-// });

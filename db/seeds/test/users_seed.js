@@ -1,6 +1,6 @@
 // knex and promise - i don't tink promise 
   exports.seed = (knex, Promise) => {
-    return knex('trailheads').del() // delets all entries
+    return knex('users').del() // delets all entries
       .then(() => {
         return knex('users').insert({
           name: 'Willow',

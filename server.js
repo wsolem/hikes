@@ -5,11 +5,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const port = 8080;
-// const db = require('./db/db'); 
-const usersDb = require('./db/users');
-const hikesDb = require('./db/hikes');
-const trailheadsDb = require('./db/trailheads');
-const listsDb = require('./db/lists');
+const users = require('./src/app/users');
+const hikes = require('./src/app/hikes');
+const trailheads = require('./src/app/trailheads');
+const lists = require('./src/app/lists');
 
 const cors = require('cors');
 const whitelist = ['http://localhost:8080']
@@ -21,7 +20,6 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   }
-  
 }
 app.use(cors(corsOptions));
 
@@ -35,44 +33,33 @@ app.use(
 /*
   getHikes,
   getHikeByHikeId,
-  createHike,
-  updateHike,
-  deleteHikeByHikeId,
-  getUser,
-  getUserById,
-  createUser,
-  deleteUser,
-  updateUser,
-  getListsByUser,
-  createList,
-  deleteList,
-  deleteHikeFromList,
-  addHikeToList
+  createOneHike,
+  createHike
 */
 
-app.get('/', hikesDb.getHikes);
-app.get('/hikes', hikesDb.getHikes);
-app.get('/hikes/:id', hikesDb.getHikeByHikeId);
-app.post('/hikes', hikesDb.createHike);
-app.put('/hikes/:id', hikesDb.updateHike);
-app.delete('/hikes/:id', hikesDb.deleteHikeByHikeId);
+// app.get('/', hikes.getHikes);
+app.get('/api/hikes', hikes.getHikes);
+app.get('/api/hikes/:hikeid', hikes.getHikeByHikeId);
+app.post('/api/hikes', hikes.createHike);
+app.put('/api/hikes/:hikeid', hikes.updateHike);
+app.delete('/api/hikes/:hikeid', hikes.deleteHike);
 
 // todo: add user stuff
-app.get('/user', usersDb.getAllUsers); // this should have limited access - only admin/developer
-app.get('/user/:id', usersDb.getUserById);
-app.put('/user/:id', usersDb.updateUser);
-app.post('/user', usersDb.createUser);
-app.delete('/user/:id', usersDb.deleteUser);
+// app.get('/user', users.getAllUsers); // this should have limited access - only admin/developer
+// app.get('/user/:id', users.getUserById);
+// app.put('/user/:id', users.updateUser);
+// app.post('/user', users.createUser);
+// app.delete('/user/:id', users.deleteUser);
 
-// todo: add routes for lists
-app.get('/user/:id/lists', listsDb.getListsByUser);
-app.post('/user/:id/lists', listsDb.createList);
-app.delete('/user/:id/list/:id', listsDb.deleteList); 
+// // todo: add routes for lists
+// app.get('/user/:id/lists', lists.getListsByUser);
+// app.post('/user/:id/lists', lists.createList);
+// app.delete('/user/:id/list/:id', lists.deleteList); 
 
 // todo: add routes for trailheads
 
 const server = app.listen(port, () => {
-  console.log(`App running on port ${port}. GO ME!!`);
+  console.log(`App running on port ${port}.`);
 });
 
 module.exports = server;
