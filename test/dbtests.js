@@ -52,6 +52,7 @@ process.env.NODE_ENV = 'test';
 const hikesDb = require('../src/db/hikes');
 const helperFs = require('./helperFunctions');
 const hikes = require('../src/db/hikes');
+const { should } = require('chai');
 // const { deleteHike } = require('../src/app/hikes');
 // const { on, update } = require('../knex');
 // const { updateHike, allHikes } = require('../src/db/hikes');
@@ -252,6 +253,32 @@ describe('Hikes', () => {
           helperFs.hikesMatch(newHike, foundHike[0]);
           done();
         })
+      });
+      describe('save two hikes with same name', () => {
+        const hikeSameName = {
+          name: newHike.name,
+          distance: 5,
+          difficulty: 1,
+          hikeid: '888888'
+        };
+        let sameHikeResult;
+
+        before('save new hike and keep result', (done) => {
+          hikesDb.saveHike(hikeSameName).then(() => {
+            // nothing is expected to happen
+            done();
+          }).catch((err) => {
+            sameHikeResult = err;
+            done()
+          });
+        });
+
+        it('should get error', () => {
+          sameHikeResult.should.exist;
+          sameHikeResult.should.be.an.instanceOf(Error);
+          sameHikeResult.constraint.should.exist;
+          sameHikeResult.constraint.should.equal('hikes_name_unique');
+        });
       });
     });
     // do i need to do all the required fields missing?

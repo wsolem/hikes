@@ -10,6 +10,7 @@ const ensureArray = (field) => {
 }
 
 const { v4: uuidv4 } = require('uuid');
+const { restore } = require('sinon');
 
 const getHikes = (req, res) => {
   return hikesDb.allHikes()
@@ -46,7 +47,31 @@ const getHikeByHikeId = (req, res) => {
   }).catch(err => res.send(err));
 }
 
+const validateHike = (hike) => {
+  const hikeFields = Object.keys(hike);
+  const hasAllFields = hasRequiredFields(hikeFields);
+  const hasOnlyExpectedFields = hasExpectedFields(hikeFields);
+  return (hasAllFields && hasOnlyExpectedFields);
+  // let { date, difficulty, distance, hiked, name, parks, regions, tags, trailheads } = hike;
+  // check that it has corre
+}
+
+const hasRequiredFields = (hikeFields) => {
+  const requiredFields = [ 'name', 'distance', 'difficulty' ];
+  return requiredFields.every(fld => hikeFields.includes(fld));
+}
+
+const hasExpectedFields = (hikeFields) => {
+  const expectedFields = [ 'name', 'distance', 'hiked', 'date', 'difficulty', 'regions', 'parks', 'trailheads', 'tags' ];
+  // for every field in hikeFields, we should expect to see in expectedFields
+  return hikeFields.every(fld => expectedFields.includes(fld)); // so we'll get a false if there is a hike that isn't in expectedFields
+}
 const createOneHike = (hike, res) => {
+  let isValid = validateHike(hike);
+  if (!isValid) {
+    // return instead of throw to handle arrays with both incorrect and correct hikes
+    return new Error(`'${hike.name}' creation failed`);
+  }
   let { date, difficulty, distance, hiked, name, parks, regions, tags, trailheads } = hike;
   const hikeid = uuidv4();
   regions = ensureArray(regions);
@@ -67,24 +92,47 @@ const createOneHike = (hike, res) => {
     hikeid
   }).then(result => {
     if (result) {
-      res.status(201).json({ hikeid });
+      return hikeid;
     } else {
       // handle error
     }
   }).catch(err => res.send(err));
 }
 
-const createHike = (req, res) => {
+const createHike = async (req, res) => {
   let hikes = req.body;
+  let hikeIds = [];
+  let hikeErrs = [];
+
   if (Array.isArray(hikes)) {
-    let hike;
-    for (let i = 0; i < hikes.length; i++) {
-      console.log(hike)
-      hike = hikes[i];
-      creatOneHike(hike, res);
+    try {
+      let hikesRes = hikes.map(async (hike) => await createOneHike(hike));
+      let hikesAndErrs = await Promise.all(hikesRes);
+      hikesAndErrs.forEach(hikeOrErr => {
+        (hikeOrErr instanceof Error) ? hikeErrs.push(hikeOrErr.message) : hikeIds.push(hikeOrErr);
+      });
+    } catch(err) {
+      // this is a db error
+      console.log(err);
+    } finally {
+      if (hikeIds.length > 0) {
+        res.status(201).json( { hikeIds, hikeErrs });
+      } else {
+        res.status(400).json({ hikeErrs });
+      }
     }
   } else {
-    createOneHike(hikes, res);
+    try {
+      const hikeIdOrErr = await createOneHike(hikes, res);
+      if (hikeIdOrErr instanceof Error) {
+        res.status(400).send(hikeIdOrErr.message);
+      } else {
+        res.status(201).json({ hikeIds: [hikeIdOrErr] });
+      }
+    } catch(err) {
+      // todo: make this consistent
+      res.status(400).send(err.message)
+    }
   }
 }
 
