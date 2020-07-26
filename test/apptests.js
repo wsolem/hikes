@@ -1,19 +1,18 @@
-'use strict';
-
 process.env.NODE_ENV = 'test';
 
-var chai = require('chai');
-var should = chai.should();
-var chaiHttp = require('chai-http');
-var server = require('../server');
-chai.use(chaiHttp);
-const requester = chai.request(server).keepOpen();
+const chai = require('chai');
+const chaiHttp = require('chai-http');
+const server = require('../server');
 const helperFs = require('./helperFunctions');
 const hikesDb = require('../src/db/hikes');
-const { update } = require('../knex');
+const { as } = require('../knex');
+
+const should = chai.should();
+chai.use(chaiHttp);
+const requester = chai.request(server).keepOpen();
 
 // Hikes Tests
-describe.only('Hikes', () => {
+describe('Hikes', () => {
   after('close requester', () => requester.close());
 
   describe('#getHikes', () => {
@@ -24,6 +23,8 @@ describe.only('Hikes', () => {
           res.should.have.status(200);
           res.should.be.json;
           res.body.should.be.a('array');
+          // todo: don't want to hard code length
+          // at some point will want to create hikes here instead of seeding
           res.body.length.should.equal(3);
           res.body.map((hike) => (helperFs.isHike(hike, 'allhikes')).should.equal(true));
           done();
@@ -33,33 +34,33 @@ describe.only('Hikes', () => {
 
   describe('#getHikeByHikeId', () => {
     let oneHike;
-    
+
     before('get all hikes and save', (done) => {
       requester.get('/api/hikes')
         .end((err, res) => {
           should.not.exist(err);
           res.should.have.status(200);
           should.exist(res.body);
-          oneHike = res.body[0];
+          [oneHike] = res.body;
           done();
         });
     });
 
     describe('correct id', () => {
       it('should get one hike', (done) => {
-        const hikeid = oneHike.hikeid
-        
+        const { hikeid } = oneHike;
+
         requester.get(`/api/hikes/${hikeid}`)
           .end((err, res) => {
             should.not.exist(err);
             res.should.have.status(200);
             should.exist(res.body);
             res.body.length.should.equal(1);
-            oneHike = res.body[0];
+            [oneHike] = res.body;
             (helperFs.isHike(oneHike)).should.eq(true);
             done();
           });
-      }); 
+      });
     });
 
     describe('incorrect id', () => {
@@ -111,7 +112,7 @@ describe.only('Hikes', () => {
                 should.exist(res);
                 saveResponse = res;
                 should.exist(saveResponse.body);
-                hikeId = saveResponse.body.hikeIds[0];
+                [hikeId] = saveResponse.body.hikeIds;
                 done();
               });
           });
@@ -187,7 +188,7 @@ describe.only('Hikes', () => {
             should.exist(missingFieldResult.error.text);
             // todo: this string and any other used, errors, etc., should be saved somewhere
             // missingFieldResult.error.text.should.equal('Incorrectly formatted Hike');
-            missingFieldResult.error.text.should.equal(`'${hikeMissingField.name}' creation failed`)
+            missingFieldResult.error.text.should.equal(`'${hikeMissingField.name}' creation failed`);
           });
 
           it('should not be found in list of all hikes', (done) => {
@@ -208,7 +209,7 @@ describe.only('Hikes', () => {
             name: 'Has hikeid already added',
             difficulty: 2,
             distance: 2,
-            hikeid: '123lkj'
+            hikeid: '123lkj',
           };
           let withHikeIdRes;
 
@@ -248,7 +249,7 @@ describe.only('Hikes', () => {
             name: 'Hike With Non-existant field',
             difficulty: 2,
             distance: 2,
-            blahblah: 'blahblah'
+            blahblah: 'blahblah',
           };
           let hikeNonExistantFldRes;
 
@@ -364,7 +365,7 @@ describe.only('Hikes', () => {
             },
             {
               name: 'Missing info Hike',
-              distance: 2
+              distance: 2,
             }
           ];
           let savedResponse;
@@ -426,7 +427,7 @@ describe.only('Hikes', () => {
               name: 'non-existant field Hike',
               difficulty: 2,
               distance: 2,
-              blahblah: 'blah'
+              blahblah: 'blah',
             }
           ];
           let savedResponse;
@@ -487,7 +488,7 @@ describe.only('Hikes', () => {
               name: 'non-existant field Hike',
               difficulty: 2,
               distance: 2,
-              blahblah: 'blah'
+              blahblah: 'blah',
             }
           ];
           let savedResponse;
@@ -497,12 +498,11 @@ describe.only('Hikes', () => {
           before('make request and save response', async () => {
             savedResponse = await requester.post('/api/hikes')
               .send(incorrectHikes);
-              newHikeIds = savedResponse.body.hikeIds;
-              newHikeErrs = savedResponse.body.hikeErrs;
+            newHikeIds = savedResponse.body.hikeIds;
+            newHikeErrs = savedResponse.body.hikeErrs;
           });
 
           it('should get a failed response', () => {
-            console.log(savedResponse.body)
             savedResponse.status.should.equal(400);
             should.not.exist(newHikeIds);
             should.exist(newHikeErrs);
@@ -516,12 +516,7 @@ describe.only('Hikes', () => {
             allHikesAdded.length.should.equal(allHikes.length);
             (incorrectHikes.filter(hike => allHikesAdded.includes(hike.name))).length.should.equal(0);
           });
-          // describe('nonexistant hike id', () => {
-
-          // });
-          // describe('nonexistant fields', () => {
-
-          // });
+          describe.skip('nonexistant hike id', () => {});
         });
       });
     });
@@ -532,12 +527,14 @@ describe.only('Hikes', () => {
       const newHikeToSave = {
         name: 'Update Me',
         distance: 2,
-        difficulty: 2
+        difficulty: 2,
       };
       let newHike;
+      let newHikeId;
+
       before('create hike to update', async () => {
         const response = await requester.post('/api/hikes').send(newHikeToSave);
-        const newHikeId = response.body[0];
+        newHikeId = response.body.hikeIds[0];
         const newHikeRes = await requester.get(`/api/hikes/${newHikeId}`);
         newHike = newHikeRes.body[0];
       });
@@ -549,7 +546,7 @@ describe.only('Hikes', () => {
       describe('one field', () => {
         describe('correctly formatted', () => {
           const updateFields = {
-            distance: 11
+            distance: 11,
           };
           let updateRes;
   
@@ -558,14 +555,15 @@ describe.only('Hikes', () => {
           });
 
           after('restore original hike data', () => {
-            // use hikesdb for this
+            return hikesDb.updateHike(newHikeId, { distance: newHike.distance });
           });
   
           it('should be successful request', () => {
             should.exist(updateRes);
-            updateRes.status.should.equal(201); // double check if this is what I really want
+            updateRes.status.should.equal(201);
             should.exist(updateRes.body);
-            updateRes.body[0].should.equal(newHikeId);
+            should.exist(updateRes.body.hikeId)
+            updateRes.body.hikeId.should.equal(newHikeId);
           });
 
           it('should return new info in new request', async () => {
@@ -573,23 +571,25 @@ describe.only('Hikes', () => {
             should.exist(response.body);
             const updatedHike = response.body[0];
             updatedHike.distance.should.not.equal(newHike.distance);
-            updatedHike.distance.should.equal(updateFields.distance);
+            Number(updatedHike.distance).should.equal(updateFields.distance);
           });
         });
+
         describe('incorrectly formatted', () => {
           describe('non existant field', () => {
             const updateFields = {
-              blahblah: 'blah'
+              blahblah: 'blah',
             };
             let updateRes;
 
             before('try to update hike and save response', async () => {
-              updateRes = await requester.put(`/api/hikes/${newHikeId}`);
+              updateRes = await requester.put(`/api/hikes/${newHikeId}`).send(updateFields);
             });
 
             it('should be a failure response', () => {
               updateRes.status.should.equal(400);
-              console.log(updateRes.body); // double checking what I'm getting back
+              should.exist(updateRes.text);
+              updateRes.text.should.equal('Invalid fields');
             });
 
             it('should not see changes in following hike requests', async () => {
@@ -597,12 +597,11 @@ describe.only('Hikes', () => {
               const updatedHike = response.body[0];
               should.not.exist(updatedHike.blahblah);
             });
-
           });
-          // does this make sense here?
+
           describe('incorrect update data', () => {
             const updateFields = {
-              distance: 'hello'
+              distance: 'hello',
             };
             let updateRes;
 
@@ -612,10 +611,9 @@ describe.only('Hikes', () => {
 
             it('should be a failure response', () => {
               updateRes.status.should.equal(400);
-              console.log(updateRes.body); // double checking what I'm getting back
             });
 
-            it('should not see changes in following hike requests', () => {
+            it('should not see changes in following hike requests', async () => {
               const response = await requester.get(`/api/hikes/${newHikeId}`);
               const updatedHike = response.body[0];
               updatedHike.distance.should.not.equal(updateFields.distance);
@@ -624,45 +622,46 @@ describe.only('Hikes', () => {
           });
         });
       });
+
       describe('multiple fields', () => {
         describe('correctly formatted', () => {
           const updateFields = {
             hiked: true,
-            difficulty: 3
+            difficulty: 3,
           };
           let updateRes;
   
           before('update hike and save response', async () => {
-            updateRes = await requester.put(`/api/hikes/${newHikeId}`);
+            updateRes = await requester.put(`/api/hikes/${newHikeId}`).send(updateFields);
           });
 
           after('restore fields', () => {
-            // use hikesdb for this
+            return hikesDb.updateHike(newHikeId, { hiked: newHike.hiked, difficulty: newHike.difficulty });
           });
   
           it('should be successful request', () => {
-            should.exist(updateRes);
-            updateRes.status.should.equal(201); // double check this is the response i actually want
             should.exist(updateRes.body);
-            updateRes.body[0].should.equal(newHikeId);// 
+            updateRes.status.should.equal(201);
+            should.exist(updateRes.body.hikeId);
+            updateRes.body.hikeId.should.equal(newHikeId);
           });
   
           it('should return new info in new request', async () => {
             const response = await requester.get(`/api/hikes/${newHikeId}`);
             should.exist(response.body);
             const updatedHike = response.body[0];
-            // double check this makes sense
-            (updateFields.keys).forEach(fld => {
+            (Object.keys(updateFields)).forEach(fld => {
               updatedHike[fld].should.not.equal(newHike[fld]);
               updatedHike[fld].should.equal(updateFields[fld]);
             });
           });
         });
+
         describe('incorrectly formatted', () => {
           describe('one correct field, one non existant field', () => {
             const updateFields = {
               difficulty: 1,
-              blahblah: 'blah'
+              blahblah: 'blah',
             };
             let updateRes;
 
@@ -672,24 +671,24 @@ describe.only('Hikes', () => {
 
             it('should be a failure response', () => {
               should.exist(updateRes);
-              updateRes.status.should.equal(400); // again double check
+              updateRes.status.should.equal(400);
             });
 
             it('should not see changes in following hike requests', async () => {
               const response = await requester.get(`/api/hikes/${newHikeId}`);
               const updatedHike = response.body[0];
-              (updateFields.keys).forEach(fld => {
-                updatedHike[fld].should.equal(newHike[fld]);
-                updatedHike[fld].should.not.equal(updateFields[fld]);
+              (Object.keys(updateFields)).forEach(fld => {
+                updateFields[fld].should.not.equal(updatedHike[fld]);
+                const fieldsMatch = updatedHike[fld] === newHike[fld];
+                fieldsMatch.should.equal(true);
               });
             });
-
           });
-          // does this make sense here?
+
           describe('only non-existant fields', () => {
             const updateFields = {
               doodah: 1,
-              blahblah: 'blah'
+              blahblah: 'blah',
             };
             let updateRes;
 
@@ -699,18 +698,18 @@ describe.only('Hikes', () => {
 
             it('should be a failure response', () => {
               should.exist(updateRes);
-              updateRes.status.should.equal(400); // again double check
+              updateRes.status.should.equal(400);
             });
 
             it('should not see changes in following hike requests', async () => {
               const response = await requester.get(`/api/hikes/${newHikeId}`);
               const updatedHike = response.body[0];
-              (updateFields.keys).forEach(fld => {
-                updatedHike[fld].should.equal(newHike[fld]);
-                updatedHike[fld].should.not.equal(updateFields[fld]);
+              (Object.keys(updateFields)).forEach(fld => {
+                const fieldsMatch = updatedHike[fld] === newHike[fld];
+                fieldsMatch.should.equal(true);
+                updateFields[fld].should.not.equal(updatedHike[fld]);
               });
             });
-
           });
         });
       });
@@ -718,46 +717,130 @@ describe.only('Hikes', () => {
 
     // for now we'll just be able to update one hike at a time
     describe.skip('multiple hikes', () => {
-      describe('correctly formatted', () => {
-
-      });
-
+      describe('correctly formatted', () => {});
       describe('incorrectly formatted', () => {
         // I'm thinking save what's correct, return hike info if incorrect
-        describe('only one incorrect hike', () => {
-
-        });
+        describe('only one incorrect hike', () => {});
         describe('all incorrectly formatted', () => {
-          describe('nonexistant hike id', () => {
-
-          });
-          describe('not-updateable fields', () => {
-
-          });
+          describe('nonexistant hike id', () => {});
+          describe('not-updateable fields', () => {});
         });
       });
     });
-    
   });
 
-  describe.skip('#deleteHike', () => {
+  describe('#deleteHike', () => {
     describe('one hike', () => {
-      let hikeToDelete = {
-        name: 'Delete Me',
-
-      };
-      before('create hike to delete', (done) =>{
-
-      });
-
+      // todo: there are some strange issues with running these tests twice
+      // and i need to make sure that it both correctly deletes
+      // and correctly re-creates 
+      // maybe just renaming variables
       describe('correctly formatted', () => {
+        let delResp;
+        let hikeToDelete = {
+          name: 'Delete Me',
+          difficulty: 3,
+          distance: 12
+        };
+        let newHikeId;
+        let allHikesWithHikeToDel;
 
+        before('create hike to delete then get new hike to compare', async () => {
+          const newHikeIdRes = await requester.post('/api/hikes').send(hikeToDelete);
+          newHikeId = newHikeIdRes.body.hikeIds[0];
+          const newHikeRes = await requester.get(`/api/hikes/${newHikeId}`);
+          newHike = newHikeRes.body;
+        });
+  
+        before('get all hikes for comparison', async () => {
+          const allHikesRes = await requester.get('/api/hikes');
+          allHikesWithHikeToDel = allHikesRes.body;
+        });
+
+        before('delete hike and save response', async () => {
+          delResp = await requester.delete(`/api/hikes/${newHikeId}`);
+        });
+
+        it('should be a successful response', () => {
+          should.exist(delResp);
+          should.exist(delResp.status);
+          delResp.status.should.equal(200);
+        });
+
+        it('should get deleted hike in response', () => {
+          should.exist(delResp.body);
+          delResp.body.should.be.a('array');
+          delResp.body.length.should.equal(1);
+          delResp.body[0].should.equal(newHikeId);
+        });
+
+        it('should not be able to get deleted hike directly', async () => {
+          const deletedHikeRes = await requester.get(`/api/hikes/${newHikeId}`);
+          should.exist(deletedHikeRes);
+          deletedHikeRes.status.should.equal(404);
+        });
+
+        it('should not be in list of all hikes', async () => {
+          const allHikesAfterDelRes = await requester.get('/api/hikes');
+          (allHikesWithHikeToDel.length).should.not.equal(allHikesAfterDelRes.body.length);
+          (allHikesWithHikeToDel.length).should.equal(allHikesAfterDelRes.body.length + 1);
+          let hasHike = allHikesAfterDelRes.body.filter(hike => hike.hikeid === newHikeId);
+          hasHike.length.should.equal(0);
+        });
       });
-      describe('incorrectly formatted', () => {
 
+      describe('incorrectly formatted', () => {
+        let hikeToDelete = {
+          name: 'Try to Delete Me',
+          difficulty: 3,
+          distance: 12
+        };
+        let newHike;
+        let newHikeId;
+        let allHikesWithHikeToDel;
+
+        before('create hike to delete then get new hike to compare', async () => {
+          const newHikeIdRes = await requester.post('/api/hikes').send(hikeToDelete);
+          newHikeId = newHikeIdRes.body.hikeIds[0];
+          const newHikeRes = await requester.get(`/api/hikes/${newHikeId}`);
+          newHike = newHikeRes.body;
+        });
+  
+        before('get all hikes for comparison', async () => {
+          const allHikesRes = await requester.get('/api/hikes');
+          allHikesWithHikeToDel = allHikesRes.body;
+        });
+
+        after('delete extra hike', async () => {
+          await hikesDb.deleteHikeByHikeId(newHikeId);
+        });
+
+        describe('with non-existant hike id', () => {
+          const nonExHikeId = 'zyzzx';
+          let delHikeRes;
+          
+          before('try to delete hike and save response', async () => {
+            delHikeRes = await requester.delete(`/api/hikes/${nonExHikeId}`);
+          });
+          
+          it('should not get a successful response', () => {
+            should.exist(delHikeRes);
+            delHikeRes.status.should.equal(404);
+          });
+
+          it('should not change list of all hikes', async () => {
+            const allHikesAfterDelRes = await requester.get('/api/hikes');
+            allHikesWithHikeToDel.length.should.equal(allHikesAfterDelRes.body.length);
+          });
+        });
+
+        describe.skip('with extra data sent', () => {
+          // this is a placeholder - at some point will want to change the delete function to delete by sending it in the body
+        });
       });
     });
-    describe('multiple hikes', () => {
+    // todo: future functionality
+    describe.skip('multiple hikes', () => {
       describe('correctly formatted', () => {
 
       });
@@ -767,7 +850,7 @@ describe.only('Hikes', () => {
         });
         describe('all non-existant ids', () => {
 
-        })
+        });
       });
     });
   });

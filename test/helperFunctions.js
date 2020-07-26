@@ -10,7 +10,7 @@ const compareArrays = (arr1, arr2) => {
 }
 
 const isHike = (hikeObject, hikeStyle) => {
-  const keys = (Object.getOwnPropertyNames(hikeObject)).sort();
+  const keys = (Object.keys(hikeObject)).sort();
   // lazy, put it in order that it is in tabe and sorting
   const expectedKeys = hikeStyle === 'allhikes' ?
     [ 'name', 'distance', 'difficulty', 'hikeid' ].sort() : 
@@ -31,14 +31,6 @@ const hasHiddenFields = (hikeObject, hiddenHikeFields) => {
     }
   }
   return false;
-  // keys.forEach((key) => {
-  //   hiddenHikeFields.forEach((field) => {
-  //     if (key === field) {
-  //       return true;
-  //     }
-  //   });
-  // });
-  // return false;
 }
 
 // update to be more general
