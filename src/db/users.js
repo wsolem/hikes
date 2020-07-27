@@ -1,32 +1,33 @@
 'use strict';
 
-const getUserById = (req, res) => {
-  // use something on page for this??? 
-  // or is this a login thing?
-  // for now, this will be a dummy call - it doesn't matter what exactly is sent, we are returning a dummy user
-  // also, we will defintitely need to obscure username and password
-  const { username, password } = req.body; // i mean, sorta
-  knex('users').where('username', username).select('username', 'name', 'lastname', 'userid', 'email').then(result => {
-    if (results) {
-      res.status(200).json(results);
-    } else {
-      // handle error
-    }
-  }).catch(err => res.send(err));
-  // pool.query('SELECT * FROM users WHERE username = $1', [username], (error, results) => {
-  //   if (error) {
-  //     throw error;
-  //   }
-  //   res.status(200).json(results.rows);
-  // });
-}
+const knex = require("../../knex");
+
+// All user stuff should be protected on some level
+
+/*
+So far these are just some ideas
+User types:
+Admin
+Developer
+Paid User
+Free User
+
+*/
+
+const getUserById = (userId) => knex('users')
+  .where('userid', userId)
+  .select('email', 'firstname', 'lastname',  'userid', 'username', 'usertype')
+  .catch((err) => new Error(err.message));
 
 // todo: get user by fields - username? - should be a protected field
-const getAllUsers = (req, res) => {
+const getUserByFields = (req, res) => {
 
-}
+};
 
-const createUser = (req, res) => {
+// todo: allUsers should definitely be protected
+const allUsers = () => knex('users').select('username', 'firstname', 'lastname', 'userid').orderBy('username');
+
+const createUser = () => {
 
 }
 
@@ -39,7 +40,7 @@ const deleteUser = (req, res) => {
 }
 
 module.exports = {
-  getAllUsers,
+  allUsers,
   getUserById,
   createUser,
   deleteUser,

@@ -27,8 +27,9 @@ also really need to separate out the tests into their own files based on
 process.env.NODE_ENV = 'test';
 
 const hikesDb = require('../src/db/hikes');
+const usersDb = require('../src/db/users');
 const helperFs = require('./helperFunctions');
-const hikes = require('../src/db/hikes');
+const { should } = require('chai');
 const hiddenHikeFields = [ 'id' ];
 
 // Hikes Tests
@@ -399,41 +400,51 @@ describe('Hikes', () => {
 // TODO: SEPARATE INTO OWN FILE
 // Users Tests
 describe('Users', () => {
-  before('set up users', () => {
+  describe('#allUsers', () => {
+    let allUsers;
 
-  });
-  after('tear down users', () => {
-
-  });
-  /// um, i don't actually have a function for this yet
-  describe('#getAllUsers', () => {
-    before('get users call & save to object', () => {
-
+    before('get users call & save to object', async () => {
+      allUsers = await usersDb.allUsers();
     });
-    it('should match list of uses in setup', () => {
 
-    });
-    it('should only include valid fields', () => {
-
+    it('should be an array of valid users', () => {
+      allUsers.should.be.an('array');
+      allUsers.forEach((user) => (helperFs.isUser(user, 'allUsers')).should.equal(true));
     });
   });
   // get get user id from list in before
   describe('#getUserById', () => {
+    let allUsers;
+    let userFromAll;
+
+    before('get all users for comparison', async () => {
+      allUsers = await usersDb.allUsers();
+      userFromAll = allUsers[0];
+    });
+
     describe('properly formatted request', () => {
-      before('get user object and save return', () => {
+      let user;
 
+      before('get user object and save return', async () => {
+        user = await usersDb.getUserById(userFromAll.userid);
       });
-      // todo: fix to reflect expected response
-      it('should have a successful response', () => {
 
+      it('should return one hike', () => {
+        user.should.exist;
+        user.should.be.an('array');
+        user.length.should.equal(1);
       });
+
       // should match from one from list from before
       it('should have expected name and user id', () => {
-
+        user[0].username.should.exist;
+        user[0].username.should.equal(userFromAll.username);
+        user[0].userid.should.exist;
+        user[0].userid.should.equal(userFromAll.userid);
       });
       // make sure it doesn't have sensitive fields
       it('should only have expected fields', () => {
-
+        (helperFs.isUser(user[0])).should.equal(true);
       });
 
     });

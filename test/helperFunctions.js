@@ -8,16 +8,37 @@ const compareArrays = (arr1, arr2) => {
   }
   return true;
 }
+/*
+ id        | integer                |           | not null | nextval('users_id_seq'::regclass)
+ email     | character varying(255) |           |          | 
+ userid    | character varying(255) |           | not null | 
+ username  | character varying(255) |           | not null | 
+ lastname  | character varying(255) |           |          | 
+ password  | character varying(255) |           |          | 
+ usertype  | character varying      |           |          | 
+ firstname | character varying      |     
+
+
+ need to make usertype required
+*/
+
+const isUser = (userObject, userStyle) => {
+  const keys = (Object.keys(userObject)).sort();
+  const expectedKeys = userStyle === 'allUsers' ? 
+    ['firstname', 'lastname', 'userid', 'username'].sort() :
+    ['email', 'firstname', 'lastname',  'userid', 'username', 'usertype'].sort();
+  return (keys.length === expectedKeys.length) && compareArrays(keys, expectedKeys);
+};
 
 const isHike = (hikeObject, hikeStyle) => {
   const keys = (Object.keys(hikeObject)).sort();
   // lazy, put it in order that it is in tabe and sorting
   const expectedKeys = hikeStyle === 'allhikes' ?
-    [ 'name', 'distance', 'difficulty', 'hikeid' ].sort() : 
-    [ 'name', 'distance', 'hiked', 'date', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags'].sort();
+    ['name', 'distance', 'difficulty', 'hikeid'].sort() : 
+    ['name', 'distance', 'hiked', 'date', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags'].sort();
   
   return (keys.length === expectedKeys.length) && compareArrays(keys, expectedKeys);
-}
+};
 
 // um i can definitly pretty this mess up
 const hasHiddenFields = (hikeObject, hiddenHikeFields) => {
@@ -31,7 +52,7 @@ const hasHiddenFields = (hikeObject, hiddenHikeFields) => {
     }
   }
   return false;
-}
+};
 
 // update to be more general
 const hikesMatch = (hikeA, hikeB) => {
@@ -56,11 +77,12 @@ const hikesMatch = (hikeA, hikeB) => {
     }
   }
   return true;
-}
+};
 
 module.exports = {
   compareArrays,
   isHike,
   hasHiddenFields,
   hikesMatch,
+  isUser,
 }

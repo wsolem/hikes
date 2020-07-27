@@ -3,27 +3,30 @@
     return knex('users').del() // delets all entries
       .then(() => {
         return knex('users').insert({
-          name: 'Willow',
+          firstname: 'Willow',
           email: 'me@me.com',
           userid: 'abc123',
           username: 'willow',
-          lastname: 'Solem'  
+          lastname: 'Solem',
+          usertype: 'developer'
         });
       }).then(() => {
         return knex('users').insert({
-          name: 'Tima',
+          firstname: 'Tina',
           email: 'tina@me.com',
           userid: 'zyx246',
           username: 'tinab',
-          lastname: 'Belcher' 
+          lastname: 'Belcher',
+          usertype: 'paid'
         });
       }).then(() => {
         return knex('users').insert({
-          name: 'Gene',
+          firstname: 'Gene',
           email: 'gene@me.com',
           userid: 'mno222',
           username: 'gbelcher',
-          lastname: 'Belcher' 
+          lastname: 'Belcher',
+          usertype: 'free'
         });
       });
   }
