@@ -449,15 +449,15 @@ describe('Users', () => {
 
     });
     describe('with non-existent user', () => {
-      before('request user and save response', () => {
+      let getUserBadId;
+      const nonExistantUserId = 'blahblahblah';
 
+      before('request user and save response', async () => {
+        getUserBadId = await usersDb.getUserById(nonExistantUserId);
       });
-      // todo: make sure i know the expected response 
-      it('should have a failed response and message', () => {
 
-      });
       it('should not include the user object', () => {
-
+        console.log(getUserBadId);
       });
     });
   });

@@ -22,6 +22,7 @@
           distance: 2,
           difficulty: 1,
           hikeid: '246812',
+          description: 'Beautiful views, can see birds'
         });
       });
   }

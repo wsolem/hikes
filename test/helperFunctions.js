@@ -35,7 +35,7 @@ const isHike = (hikeObject, hikeStyle) => {
   // lazy, put it in order that it is in tabe and sorting
   const expectedKeys = hikeStyle === 'allhikes' ?
     ['name', 'distance', 'difficulty', 'hikeid'].sort() : 
-    ['name', 'distance', 'hiked', 'date', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags'].sort();
+    ['name', 'distance', 'hiked', 'date', 'description', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags'].sort();
   
   return (keys.length === expectedKeys.length) && compareArrays(keys, expectedKeys);
 };

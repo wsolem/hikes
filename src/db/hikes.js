@@ -3,7 +3,7 @@ const knex = require('../../knex');
 const allHikes = () => knex('hikes').select('name', 'distance', 'difficulty', 'hikeid').orderBy('name');
 
 const selectHikeByHikeId = (hikeid) => knex('hikes')
-  .select('name', 'distance', 'hiked', 'date', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags')
+  .select('name', 'distance', 'hiked', 'date', 'description', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags')
   .where('hikeid', hikeid)
   .catch(() => new Error('failed to fetch'));
 
