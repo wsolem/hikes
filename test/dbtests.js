@@ -1,11 +1,4 @@
 /*
-- Users
-  getUser,
-  getUserById,
-  createUser,
-  deleteUser,
-  updateUser,
-
 - Lists
   getListsByUser,
   createList,
@@ -26,10 +19,15 @@ also really need to separate out the tests into their own files based on
 */
 process.env.NODE_ENV = 'test';
 
+const chai = require('chai');
+const chaiHttp = require('chai-http');
+const should = chai.should();
+chai.use(chaiHttp);
+
 const hikesDb = require('../src/db/hikes');
 const usersDb = require('../src/db/users');
 const helperFs = require('./helperFunctions');
-const { should } = require('chai');
+const users = require('../src/db/users');
 const hiddenHikeFields = [ 'id' ];
 
 // Hikes Tests
@@ -164,7 +162,7 @@ describe('Hikes', () => {
     Some other things to test:
       Creation:
         cannot create a hike with an existing name
-        what happens when there are extra fields?
+        what happens when there are extra fields? - this will be caught in service layer
     */
   });
 
@@ -456,167 +454,331 @@ describe('Users', () => {
         getUserBadId = await usersDb.getUserById(nonExistantUserId);
       });
 
-      it('should not include the user object', () => {
-        console.log(getUserBadId);
+      it('should not include a user object', () => {
+        getUserBadId.should.exist;
+        getUserBadId.length.should.equal(0);
       });
     });
   });
   
   describe('#createUser', () => {
+    let allUsers;
+
+    before('get array of all users for comparison in later tests', async () => {
+      allUsers = await usersDb.allUsers();
+    });
+
     describe('correctly formatted', () => {
-      before('create user and save response', () => {
+      const wellFormattedUser = {
+        firstname: 'Louise',
+        email: 'tina@me.com',
+        userid: '333lll',
+        username: 'leweeze',
+        lastname: 'Belcher',
+        usertype: 'free'
+      };
+      let newUser;
 
+      before('create user and save response', async () => {
+        const createUserResponse = await usersDb.createUser(wellFormattedUser);
+        createUserResponse.should.exist;
       });
-      after('delete new user', () => {
 
+      after('delete new user', async () => {
+        await usersDb.deleteUser(newUser.userid);
       });
-      it('should have a successful response', () => {
-
+      
+      it('should be able to get new user and it should match user object to save', async () => {
+        const newUserRes = await usersDb.getUserById(wellFormattedUser.userid);
+        newUserRes.should.be.an('array');
+        newUserRes.length.should.equal(1);
+        newUser = newUserRes[0];
+        newUser.should.exist;
+        console.log('new user', newUser)
+        helperFs.isUser(newUser).should.equal(true);
+        helperFs.usersMatch(wellFormattedUser, newUser).should.equal(true);
       });
-      it('should have a user id generated and returned', () => {
 
+      it('new user should be in list of all users', async () => {
+        const allUsersWithNew = await usersDb.allUsers();
+        (allUsers.length).should.equal(allUsersWithNew.length - 1);
+        let foundUser = allUsersWithNew.filter((user) => {
+          return user.userid === newUser.userid;
+        });
+        helperFs.usersMatch(newUser, foundUser[0]);
       });
-      it('should match object saved', () => {
+    });
 
+    describe('missing required field', () => {
+      const userMissingReqField = {
+        firstname: 'Louise',
+        email: 'tina@me.com',
+        userid: '333lll',
+        lastname: 'Belcher',
+        usertype: 'free'
+      };
+      let createUserResponse;
+
+      before('try to create new user', async () => {
+        createUserResponse = await usersDb.createUser(userMissingReqField);
       });
-      // get list of all users
-      it('new user should be in list of all users', () => {
 
+      it('should be an error response', () => {
+        createUserResponse.should.be.an.instanceOf(Error);
+      });
+
+      it('should not be able to get user', async () => {
+        const newUser = await usersDb.getUserById(userMissingReqField.userid);
+        newUser.should.be.an('array');
+        newUser.length.should.equal(0);
       });
     });
 
-    describe('missing required fields', () => {
-      before('create user request and save response', () => {
+    // describe.skip('trying to add an existing user', () => {
+    //   const existingUser = {...allUsers[0]};
+    //   let sameUser;
 
-      });
-      // todo: make sure it has correct response
-      it('should have a failure response', () => {
+    //   before('try to create user and save object', async () => {
+    //     sameUser = usersDb.createUser(existingUser);
+    //   });
 
-      });
-      it('should not have new user in response', () => {
+    //   it('should return an error', () => {
+    //     sameUser.should.be.an.instanceOf(Error);
+    //   });
 
-      });
-      // get list of all users
-      it('should not be in list of all users', () => {
-
-      });
-    });
-    describe('has incorrect fields', () => {
-      before('create user request and save response', () => {
-
-      });
-      // todo: make sure it has correct response
-      it('should have a failure response', () => {
-
-      });
-      it('should not have new user in response', () => {
-
-      });
-      // get list of all users
-      it('should not be in list of all users', () => {
-
-      });
-    });
+    //   it('should not affect length of all users', async () => {
+    //     const allUsersAfterCreate = await usersDb.allUsers();
+    //     (allUsersAfterCreate.length).should.equal(allUsers.length);
+    //   });
+    // });
   });
 
   describe('#deleteUser', () => {
-    before('add user to delete', () => {
-      // make sure to save in object for following tests
+    const userToDelete = {
+      firstname: 'Delete',
+      email: 'blah@blah.com',
+      userid: '4343bcd',
+      username: 'someuser',
+      lastname: 'Me',
+      usertype: 'free'
+    };
+    let newUser;
+    let allUsers;
+
+    before('add user to delete', async () => {
+      newUser = await usersDb.createUser(userToDelete);
     });
+
+    before('get all users array for a baseline', async () => {
+      allUsers = await usersDb.allUsers();
+    });
+
+    after('delete user if not already deleted', async () => {
+      // i know, i know... this is what the test is for. just need to clean up
+      await usersDb.deleteUser(userToDelete.userid);
+    });
+
     describe('non-existant user id', () => {
-      before('make request and save response', () => {
+      const nonExistantUserId = 'blahblahblah';
+      let delUserRes;
 
+      before('make request and save response', async () => {
+        delUserRes = await usersDb.deleteUser(nonExistantUserId);
       });
-      it('should be a failure response', () => {
 
+      it('should return that zero were deleted', () => {
+        delUserRes.should.exist;
+        delUserRes.should.equal(0);
       });
-      it('list of users should not have changed', () => {
+
+      it('list of users should not have changed', async () => {
+        const allUsersAfterDel = await usersDb.allUsers();
+        (allUsersAfterDel.length).should.equal(allUsers.length);
+        let usersUserIds = allUsers.map((user) => user.userid);
+        let usersAfterDelIds = allUsersAfterDel.map((user) => user.userid);
+        (helperFs.compareArrays(usersUserIds.sort(), usersAfterDelIds.sort())).should.equal(true);
       });
     });
-    // how many ways can this be incorrectly formatted?
-    describe('incorrectly formatted request', () => {
-      before('make request and save response', () => {
 
-      });
-      it('should be a failure response', () => {
-
-      });
-      // request user by user id from before
-      it('should return user when requested by id', () => {
-
-      });
-      it('should still be in list of all users', () => {
-        // check both for user in list and length
-      });
-    });
     describe('correctly formatted request', () => {
-      before('make request and save response', () => {
+      let delUserRes;
 
+      before('make request and save response', async () => {
+        delUserRes = await usersDb.deleteUser(userToDelete.userid);
       });
-      it('should have a successful response', () => {
-        // response and should have some limited user object
+
+      it('should have a return indicating success', () => {
+        delUserRes.should.exist;
+        delUserRes.should.equal(1);
       });
-      it('should no longer be able to request object', () => {
-        // 4xx response for user id
+      it('should no longer be able to get user', async () => {
+        const userAfterDel = await usersDb.getUserById(userToDelete.userid);
+        userAfterDel.should.exist;
+        userAfterDel.length.should.equal(0);
       });
-      it('should no longer be in list of all users', () => {
-        // request all users, should be one shorter
+      it('should no longer be in list of all users', async () => {
+        const allUsersAfterDel = await usersDb.allUsers();
+        allUsers.length.should.equal(allUsersAfterDel.length + 1);
+        let deletedUser = allUsersAfterDel.filter((user) => user.userid === userToDelete.userid);
+        deletedUser.length.should.equal(0);
       });
     });
   });
 
   describe('#updateUser', () => {
+    let userToUpdate = {
+      username: 'sprout',
+      firstname: 'Sprout',
+      lastname: 'Solem',
+      userid: 'spr123',
+      usertype: 'paid',
+    };
+    let userToUpdateCtrd;
+
+    before('create new user to update', async () => {
+      await usersDb.createUser(userToUpdate);
+      const userToUpdateCtrdRes = await usersDb.getUserById(userToUpdate.userid);
+      userToUpdateCtrd = userToUpdateCtrdRes[0];
+    });
+
+    after('delete updated user', async () => {
+      await usersDb.deleteUser(userToUpdate.userid);
+    });
+
     describe('update one field', () => {
       describe('updateable field', () => {
-        before('update request and save respnose', () => {
+        let updateUserRes;
+        const updateField = {
+          lastname: 'Smith',
+        };
+
+        before('update user and save return', async () => {
+          updateUserRes = await usersDb.updateUser(userToUpdate.userid, updateField);
         });
+        
+        it('should have a return indicating success', () => {
+          updateUserRes.should.exist;
+          updateUserRes.should.equal(1);
+        });
+
+        it('should see change when getting user object', async () => {
+          const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
+          const updatedUser = updatedUserArr[0];
+          updatedUser.should.exist;
+          (helperFs.isUser(updatedUser)).should.equal(true);
+          (updatedUser.userid).should.equal(userToUpdate.userid);
+          (updatedUser.lastname).should.equal(updateField.lastname);
+          (updatedUser.lastname).should.not.equal(userToUpdate.lastname);
+        });
+      });
+
+      describe('non-existant field', () => {
+        let updateUserRes;
+        const updateField = {
+          blah: 'blahblahblah',
+        };
+
+        before('update and save response', async () => {
+          updateUserRes = await usersDb.updateUser(userToUpdate.userid, updateField);
+        });
+        
+        it('should indicate failure in response', () => {
+          updateUserRes.should.exist;
+          updateUserRes.should.be.instanceOf(Error);
+        });
+
+        it('should not change fields when getting user', async () => {
+          const updatedUserRes = await usersDb.getUserById(userToUpdate.userid);
+          const updatedUser = updatedUserRes[0];
+          // (updatedUser.blah).should.equal(undefined);
+          should.not.exist(updatedUser.blah);
+          (helperFs.usersMatch(userToUpdateCtrd, updatedUser)).should.be.true;
+        });
+      });
+      
+      // this doesn't work as expected - but this type of check will be done in the service layser
+      describe.skip('wrong type of data for field', () => {
+        let updateUserRes;
+        const updateField = {
+          username: 123,
+        };
+
+        before('update and save response', async () => {
+          updateUserRes = await usersDb.updateUser(userToUpdate.userid, updateField);
+        });
+
+        it('should show a successful call', () => {
+          updateUserRes.should.exist;
+          updateUserRes.should.equal(1);
+        });
+
+        it('should not have changed user object', async () => {
+          const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
+          const updatedUser = updatedUserArr[0];
+          console.log(updatedUser)
+          userToUpdateCtrd.username.should.equal(updatedUser.username);
+          
+          updatedUser.username.should.not.equal(updateField.username);
+        });
+      });
+    });
+
+    describe('multiple fields', () => {
+      describe('one nonexistant field, one updateable field', () => {
+        let updateUserRes;
+        const updateFields = {
+          blahblah: 'blahblahblah',
+          usertype: 'free',
+        };
+
+        before('update and save return object', async () => {
+          updatedUserRes = await usersDb.updateUser(userToUpdate.userid, updateFields);
+        });
+        it('should be an error', () => {
+          updatedUserRes.should.exist;
+          updatedUserRes.should.be.instanceOf(Error);
+        });
+        it('should not have changed user object', async () => {
+          const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
+          const updatedUser = updatedUserArr[0];
+          (helperFs.usersMatch(updatedUser, userToUpdateCtrd)).should.be.true;
+        });
+      });
+
+      describe('all non-existant fields', () => {
+        let updateUserRes;
+        const updateField = {
+          blahblah: 'blahblahblah',
+          blah: 123,
+        };
+      });
+  
+      describe('all updateable fields', () => {
+        let updateUserRes;
+        const updateFields = {
+          lastname: 'Smith',
+          firstname: 'striker',
+        };
+
+        before('update and save return object', async () => {
+          updateUserRes = await usersDb.updateUser(userToUpdate.userid, updateFields);
+        });
+
         it('should be successful', () => {
-
+          updateUserRes.should.exist;
+          updateUserRes.should.equal(1);
         });
-        it('should match update', () => {
 
-        });
-        it('should see update in new request', () => {
-
+        it('should match update', async () => {
+          const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
+          const updatedUser = updatedUserArr[0];
+          updatedUser.lastname.should.equal(updateFields.lastname);
+          updatedUser.firstname.should.equal(updateFields.firstname);
+          updatedUser.lastname.should.not.equal(userToUpdateCtrd.lastname);
+          updatedUser.firstname.should.not.equal(userToUpdateCtrd.firstname);
         });
       });
-      describe("multiple updateable fields", () => {
-        before('update request and save respnose', () => {
-        });
-        it('should be successful', () => {
-
-        });
-        it('should match update', () => {
-
-        });
-        it('should see update in new request', () => {
-
-        });
-      });
-      // todo: service layer to test incorrect input for fields
-      describe('protected field', () => {
-        before('request and save object', () => {
-
-        });
-        it('should have a failure response', () => {
-
-        });
-        it('should not match update in new request', () => {
-
-        });
-      });
-      describe('multiple fields with at least one protected field', () => {
-        before('request and save object', () => {
-
-        });
-        it('should have a failure response', () => {
-
-        });
-        it('should not match update in new request', () => {
-
-        });
-      });
-    })
+    });
   })
 });
 

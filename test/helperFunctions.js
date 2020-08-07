@@ -1,4 +1,3 @@
-
 // I'm sure I can come up with something prettier here
 const compareArrays = (arr1, arr2) => {
   for (let i = 0; i < arr1.length; i++) {
@@ -30,6 +29,23 @@ const isUser = (userObject, userStyle) => {
   return (keys.length === expectedKeys.length) && compareArrays(keys, expectedKeys);
 };
 
+// simplify to do a matches so  idon't have to keep writing out the same function for each object type
+const usersMatch = (userA, userB) => {
+  const keys = (Object.keys(userA)).sort();
+  let key;
+  let userAField;
+  let userBField;
+  for (let itr = 0; itr < keys.length; itr++) {
+    key = keys[itr];
+    userAField = userA[key];
+    userBField = userB[key];
+    if (userAField !== userBField) {
+      return false;
+    }
+    return true;
+  }
+};
+
 const isHike = (hikeObject, hikeStyle) => {
   const keys = (Object.keys(hikeObject)).sort();
   // lazy, put it in order that it is in tabe and sorting
@@ -44,9 +60,9 @@ const isHike = (hikeObject, hikeStyle) => {
 const hasHiddenFields = (hikeObject, hiddenHikeFields) => {
   const keys = (Object.getOwnPropertyNames(hikeObject)).sort();
 
-  for(let kitr = 0; kitr < keys.length; kitr++) {
-    for(let hitr = 0; hitr < keys.length; hitr++) {
-      if(keys[kitr] === hiddenHikeFields[hitr]) {
+  for (let kitr = 0; kitr < keys.length; kitr++) {
+    for (let hitr = 0; hitr < keys.length; hitr++) {
+      if (keys[kitr] === hiddenHikeFields[hitr]) {
         return true;
       }
     }
@@ -56,11 +72,11 @@ const hasHiddenFields = (hikeObject, hiddenHikeFields) => {
 
 // update to be more general
 const hikesMatch = (hikeA, hikeB) => {
-  const keys = (Object.getOwnPropertyNames(hikeA)).sort();
+  const keys = (Object.keys(hikeA)).sort();
   let key;
   let hikeAField;
   let hikeBField;
-  for(let itr = 0; itr < keys.length; itr++) {
+  for (let itr = 0; itr < keys.length; itr++) {
     key = keys[itr];
     hikeAField = hikeA[key];
     hikeBField = hikeB[key];
@@ -85,4 +101,5 @@ module.exports = {
   hasHiddenFields,
   hikesMatch,
   isUser,
+  usersMatch,
 }
