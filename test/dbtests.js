@@ -13,22 +13,22 @@
 - I need a proper design document
 - input validation/verification
 
-also really need to separate out the tests into their own files based on 
+also really need to separate out the tests into their own files based on
 - hikes, users, trailheads, lists
-- helper functions 
+- helper functions
 */
 process.env.NODE_ENV = 'test';
 
 const chai = require('chai');
 const chaiHttp = require('chai-http');
-const should = chai.should();
-chai.use(chaiHttp);
-
 const hikesDb = require('../src/db/hikes');
 const usersDb = require('../src/db/users');
 const helperFs = require('./helperFunctions');
-const users = require('../src/db/users');
-const hiddenHikeFields = [ 'id' ];
+
+const should = chai.should();
+chai.use(chaiHttp);
+
+const hiddenHikeFields = ['id'];
 
 // Hikes Tests
 describe('Hikes', () => {
@@ -44,7 +44,7 @@ describe('Hikes', () => {
 
     it('should be an array of hikes', (done) => {
       allHikes.should.be.an('array');
-      allHikes.forEach(hike => (helperFs.isHike(hike, 'allhikes')).should.equal(true));
+      allHikes.forEach(hike => (helperFs.isHike((hike), 'allhikes')).should.equal(true));
       done();
     });
   });
@@ -85,7 +85,7 @@ describe('Hikes', () => {
   // test variations of hike objects - certain details added, missing, etc.
   describe('#createHike', () => {
     let allHikes;
-  
+
     before('get all hikes as a baseline', (done) => {
       // make an assertion about the hikes, make note of the number for later tests
       hikesDb.allHikes().then((hikes) => {
@@ -99,13 +99,13 @@ describe('Hikes', () => {
         name: 'New Hike',
         distance: 4,
         difficulty: 2,
-        hikeid: '999999'
+        hikeid: '999999',
       };
       let saveResponse;
 
       before('create hike correctly and save return object', (done) => {
         hikesDb.saveHike(newHike).then((hikes) => {
-          saveResponse = hikes;
+          saveResponse = hikes; // this should be used in a test
           done();
         });
       });
@@ -120,21 +120,19 @@ describe('Hikes', () => {
           hike.length.should.equal(1);
           helperFs.hikesMatch(newHike, hike[0]).should.equal(true);
           done();
-        })
+        });
       });
-      
+
       it('call for all hikes should return new hike', (done) => {
         let allHikesPlus;
 
-        hikesDb.allHikes().then(hikes => {
+        hikesDb.allHikes().then((hikes) => {
           allHikesPlus = hikes;
           (allHikesPlus.length).should.equal(allHikes.length + 1);
-          let foundHike = allHikesPlus.filter((hike) => {
-            return hike.hikeid === newHike.hikeid;
-          });
+          const foundHike = allHikesPlus.filter((hike) => hike.hikeid === newHike.hikeid);
           helperFs.hikesMatch(newHike, foundHike[0]);
           done();
-        })
+        });
       });
 
       describe('save two hikes with same name', () => {
@@ -142,7 +140,7 @@ describe('Hikes', () => {
           name: newHike.name,
           distance: 5,
           difficulty: 1,
-          hikeid: '888888'
+          hikeid: '888888',
         };
         let sameHikeResult;
 
@@ -151,9 +149,9 @@ describe('Hikes', () => {
         });
 
         it('should get error', () => {
-          sameHikeResult.should.exist;
+          should.exist(sameHikeResult);
           sameHikeResult.should.be.an.instanceOf(Error);
-          sameHikeResult.message.should.exist;
+          should.exist(sameHikeResult.message);
           sameHikeResult.message.should.equal('hikes_name_unique');
         });
       });
@@ -177,12 +175,12 @@ describe('Hikes', () => {
         });
       });
     });
-    
+
     describe('update one valid field', () => {
       let updatedHike;
-      let updatefields = {
-        distance: 10
-      }
+      const updatefields = {
+        distance: 10,
+      };
 
       before('update one field of hike object and save', (done) => {
         // make sure to save the field that is going to be changed in order to change back
@@ -200,8 +198,8 @@ describe('Hikes', () => {
         });
       });
 
-      // update only one field, get 
-      it('should have updated field in hike', (done) => {        
+      // update only one field, get
+      it('should have updated field in hike', (done) => {
         (updatedHike.distance).should.not.equal(oneHike.distance);
         (Number(updatedHike.distance)).should.equal(updatefields.distance);
         done();
@@ -218,9 +216,9 @@ describe('Hikes', () => {
     describe('update one non-existant field', () => {
       let updateResponse;
       let updatedHikeNonField;
-      let updatefields = {
-        derpster: 10
-      }
+      const updatefields = {
+        derpster: 10,
+      };
 
       before('update one field of hike object and save', (done) => {
         // make sure to save the field that is going to be changed in order to change back
@@ -232,7 +230,7 @@ describe('Hikes', () => {
           });
         });
       });
-      
+
       it('should fail to save with error message', (done) => {
         updateResponse.should.be.an.instanceOf(Error);
         updateResponse.message.should.equal('failed to update');
@@ -248,10 +246,10 @@ describe('Hikes', () => {
     // todo: move to service layer
     describe('update multiple valid fields', () => {
       let updatedHike;
-      let updatefields = {
+      const updatefields = {
         distance: 12,
-        difficulty: 1
-      }
+        difficulty: 1,
+      };
 
       before('update one field of hike object and save', (done) => {
         // make sure to save the field that is going to be changed in order to change back
@@ -286,9 +284,9 @@ describe('Hikes', () => {
     describe('update multiple fields with one invalid', () => {
       let updateResponse;
       let updatedHikeNonFields;
-      let updatefields = {
+      const updatefields = {
         distance: 5,
-        derpster: 10
+        derpster: 10,
       };
 
       before('update one field of hike object and save', (done) => {
@@ -348,8 +346,8 @@ describe('Hikes', () => {
       it('should be same amount of hikes', (done) => {
         hikesDb.allHikes().then((hikes) => {
           (hikes.length).should.equal(allHikes.length);
-          let hikesHikeIds = hikes.map((hike) => hike.hikeid);
-          let allHikesHikeIds = allHikes.map((hike) => hike.hikeid);
+          const hikesHikeIds = hikes.map((hike) => hike.hikeid);
+          const allHikesHikeIds = allHikes.map((hike) => hike.hikeid);
           (helperFs.compareArrays(hikesHikeIds.sort(), allHikesHikeIds.sort())).should.equal(true);
           done();
         });
@@ -387,7 +385,7 @@ describe('Hikes', () => {
       it('should no longer be in all hikes', (done) => {
         hikesDb.allHikes().then((hikes) => {
           (hikes.length).should.equal((allHikes.length - 1));
-          let deletedHike = hikes.filter((hike) => hike.hikeid === originalHikeId);
+          const deletedHike = hikes.filter((hike) => hike.hikeid === originalHikeId);
           (deletedHike.length).should.equal(0);
           done();
         });
@@ -428,24 +426,24 @@ describe('Users', () => {
       });
 
       it('should return one hike', () => {
-        user.should.exist;
+        should.exist(user);
         user.should.be.an('array');
         user.length.should.equal(1);
       });
 
       // should match from one from list from before
       it('should have expected name and user id', () => {
-        user[0].username.should.exist;
+        should.exist(user[0].username);
         user[0].username.should.equal(userFromAll.username);
-        user[0].userid.should.exist;
+        should.exist(user[0].userid);
         user[0].userid.should.equal(userFromAll.userid);
       });
       // make sure it doesn't have sensitive fields
       it('should only have expected fields', () => {
         (helperFs.isUser(user[0])).should.equal(true);
       });
-
     });
+
     describe('with non-existent user', () => {
       let getUserBadId;
       const nonExistantUserId = 'blahblahblah';
@@ -455,12 +453,12 @@ describe('Users', () => {
       });
 
       it('should not include a user object', () => {
-        getUserBadId.should.exist;
+        should.exist(getUserBadId);
         getUserBadId.length.should.equal(0);
       });
     });
   });
-  
+
   describe('#createUser', () => {
     let allUsers;
 
@@ -475,26 +473,25 @@ describe('Users', () => {
         userid: '333lll',
         username: 'leweeze',
         lastname: 'Belcher',
-        usertype: 'free'
+        usertype: 'free',
       };
       let newUser;
 
       before('create user and save response', async () => {
         const createUserResponse = await usersDb.createUser(wellFormattedUser);
-        createUserResponse.should.exist;
+        should.exist(createUserResponse);
       });
 
       after('delete new user', async () => {
         await usersDb.deleteUser(newUser.userid);
       });
-      
+
       it('should be able to get new user and it should match user object to save', async () => {
         const newUserRes = await usersDb.getUserById(wellFormattedUser.userid);
         newUserRes.should.be.an('array');
         newUserRes.length.should.equal(1);
         newUser = newUserRes[0];
-        newUser.should.exist;
-        console.log('new user', newUser)
+        should.exist(newUser);
         helperFs.isUser(newUser).should.equal(true);
         helperFs.usersMatch(wellFormattedUser, newUser).should.equal(true);
       });
@@ -502,9 +499,7 @@ describe('Users', () => {
       it('new user should be in list of all users', async () => {
         const allUsersWithNew = await usersDb.allUsers();
         (allUsers.length).should.equal(allUsersWithNew.length - 1);
-        let foundUser = allUsersWithNew.filter((user) => {
-          return user.userid === newUser.userid;
-        });
+        const foundUser = allUsersWithNew.filter((user) => user.userid === newUser.userid);
         helperFs.usersMatch(newUser, foundUser[0]);
       });
     });
@@ -515,7 +510,7 @@ describe('Users', () => {
         email: 'tina@me.com',
         userid: '333lll',
         lastname: 'Belcher',
-        usertype: 'free'
+        usertype: 'free',
       };
       let createUserResponse;
 
@@ -560,13 +555,13 @@ describe('Users', () => {
       userid: '4343bcd',
       username: 'someuser',
       lastname: 'Me',
-      usertype: 'free'
+      usertype: 'free',
     };
     let newUser;
     let allUsers;
 
     before('add user to delete', async () => {
-      newUser = await usersDb.createUser(userToDelete);
+      newUser = await usersDb.createUser(userToDelete); // why isn't this used in a test?
     });
 
     before('get all users array for a baseline', async () => {
@@ -587,15 +582,15 @@ describe('Users', () => {
       });
 
       it('should return that zero were deleted', () => {
-        delUserRes.should.exist;
+        should.exist(delUserRes);
         delUserRes.should.equal(0);
       });
 
       it('list of users should not have changed', async () => {
         const allUsersAfterDel = await usersDb.allUsers();
         (allUsersAfterDel.length).should.equal(allUsers.length);
-        let usersUserIds = allUsers.map((user) => user.userid);
-        let usersAfterDelIds = allUsersAfterDel.map((user) => user.userid);
+        const usersUserIds = allUsers.map((user) => user.userid);
+        const usersAfterDelIds = allUsersAfterDel.map((user) => user.userid);
         (helperFs.compareArrays(usersUserIds.sort(), usersAfterDelIds.sort())).should.equal(true);
       });
     });
@@ -608,25 +603,27 @@ describe('Users', () => {
       });
 
       it('should have a return indicating success', () => {
-        delUserRes.should.exist;
+        should.exist(delUserRes);
         delUserRes.should.equal(1);
       });
+
       it('should no longer be able to get user', async () => {
         const userAfterDel = await usersDb.getUserById(userToDelete.userid);
-        userAfterDel.should.exist;
+        should.exist(userAfterDel);
         userAfterDel.length.should.equal(0);
       });
+
       it('should no longer be in list of all users', async () => {
         const allUsersAfterDel = await usersDb.allUsers();
         allUsers.length.should.equal(allUsersAfterDel.length + 1);
-        let deletedUser = allUsersAfterDel.filter((user) => user.userid === userToDelete.userid);
+        const deletedUser = allUsersAfterDel.filter((user) => user.userid === userToDelete.userid);
         deletedUser.length.should.equal(0);
       });
     });
   });
 
   describe('#updateUser', () => {
-    let userToUpdate = {
+    const userToUpdate = {
       username: 'sprout',
       firstname: 'Sprout',
       lastname: 'Solem',
@@ -655,16 +652,18 @@ describe('Users', () => {
         before('update user and save return', async () => {
           updateUserRes = await usersDb.updateUser(userToUpdate.userid, updateField);
         });
-        
+
+        after('reset field', async () => await usersDb.updateUser(userToUpdate.userid, { lastname: userToUpdate.lastname }));
+
         it('should have a return indicating success', () => {
-          updateUserRes.should.exist;
+          should.exist(updateUserRes);
           updateUserRes.should.equal(1);
         });
 
         it('should see change when getting user object', async () => {
           const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
           const updatedUser = updatedUserArr[0];
-          updatedUser.should.exist;
+          should.exist(updatedUser);
           (helperFs.isUser(updatedUser)).should.equal(true);
           (updatedUser.userid).should.equal(userToUpdate.userid);
           (updatedUser.lastname).should.equal(updateField.lastname);
@@ -681,21 +680,20 @@ describe('Users', () => {
         before('update and save response', async () => {
           updateUserRes = await usersDb.updateUser(userToUpdate.userid, updateField);
         });
-        
+
         it('should indicate failure in response', () => {
-          updateUserRes.should.exist;
+          should.exist(updateUserRes);
           updateUserRes.should.be.instanceOf(Error);
         });
 
         it('should not change fields when getting user', async () => {
           const updatedUserRes = await usersDb.getUserById(userToUpdate.userid);
           const updatedUser = updatedUserRes[0];
-          // (updatedUser.blah).should.equal(undefined);
           should.not.exist(updatedUser.blah);
-          (helperFs.usersMatch(userToUpdateCtrd, updatedUser)).should.be.true;
+          (helperFs.usersMatch(userToUpdateCtrd, updatedUser)).should.equal(true);
         });
       });
-      
+
       // this doesn't work as expected - but this type of check will be done in the service layser
       describe.skip('wrong type of data for field', () => {
         let updateUserRes;
@@ -708,24 +706,22 @@ describe('Users', () => {
         });
 
         it('should show a successful call', () => {
-          updateUserRes.should.exist;
+          should.exist(updateUserRes);
           updateUserRes.should.equal(1);
         });
 
         it('should not have changed user object', async () => {
           const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
           const updatedUser = updatedUserArr[0];
-          console.log(updatedUser)
           userToUpdateCtrd.username.should.equal(updatedUser.username);
-          
           updatedUser.username.should.not.equal(updateField.username);
         });
       });
     });
-
+    // I'm pretty sure these tests are incomplete
     describe('multiple fields', () => {
       describe('one nonexistant field, one updateable field', () => {
-        let updateUserRes;
+        let updatedUserRes;
         const updateFields = {
           blahblah: 'blahblahblah',
           usertype: 'free',
@@ -734,19 +730,21 @@ describe('Users', () => {
         before('update and save return object', async () => {
           updatedUserRes = await usersDb.updateUser(userToUpdate.userid, updateFields);
         });
+
         it('should be an error', () => {
-          updatedUserRes.should.exist;
+          should.exist(updatedUserRes);
           updatedUserRes.should.be.instanceOf(Error);
         });
+
         it('should not have changed user object', async () => {
           const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
           const updatedUser = updatedUserArr[0];
-          (helperFs.usersMatch(updatedUser, userToUpdateCtrd)).should.be.true;
+          (helperFs.usersMatch(updatedUser, userToUpdateCtrd)).should.equal(true);
         });
       });
-
+      // what? there are no tests here?
       describe('all non-existant fields', () => {
-        let updateUserRes;
+        let updatedUserRes;
         const updateField = {
           blahblah: 'blahblahblah',
           blah: 123,
@@ -765,7 +763,7 @@ describe('Users', () => {
         });
 
         it('should be successful', () => {
-          updateUserRes.should.exist;
+          should.exist(updateUserRes);
           updateUserRes.should.equal(1);
         });
 
@@ -779,11 +777,11 @@ describe('Users', () => {
         });
       });
     });
-  })
+  });
 });
 
 // Lists (of hikes) Tests
-describe('Lists', () => {
+describe.skip('Lists', () => {
   before('set up hikes, users, and lists', () => {
 
   });

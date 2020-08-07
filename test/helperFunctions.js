@@ -6,30 +6,17 @@ const compareArrays = (arr1, arr2) => {
     }
   }
   return true;
-}
-/*
- id        | integer                |           | not null | nextval('users_id_seq'::regclass)
- email     | character varying(255) |           |          | 
- userid    | character varying(255) |           | not null | 
- username  | character varying(255) |           | not null | 
- lastname  | character varying(255) |           |          | 
- password  | character varying(255) |           |          | 
- usertype  | character varying      |           |          | 
- firstname | character varying      |     
-
-
- need to make usertype required
-*/
+};
 
 const isUser = (userObject, userStyle) => {
   const keys = (Object.keys(userObject)).sort();
-  const expectedKeys = userStyle === 'allUsers' ? 
-    ['firstname', 'lastname', 'userid', 'username'].sort() :
-    ['email', 'firstname', 'lastname',  'userid', 'username', 'usertype'].sort();
+  const expectedKeys = userStyle === 'allUsers'
+    ? ['firstname', 'lastname', 'userid', 'username'].sort()
+    : ['email', 'firstname', 'lastname', 'userid', 'username', 'usertype'].sort();
   return (keys.length === expectedKeys.length) && compareArrays(keys, expectedKeys);
 };
 
-// simplify to do a matches so  idon't have to keep writing out the same function for each object type
+// create a match function that can be reused
 const usersMatch = (userA, userB) => {
   const keys = (Object.keys(userA)).sort();
   let key;
@@ -42,17 +29,17 @@ const usersMatch = (userA, userB) => {
     if (userAField !== userBField) {
       return false;
     }
-    return true;
   }
+  return true;
 };
 
 const isHike = (hikeObject, hikeStyle) => {
   const keys = (Object.keys(hikeObject)).sort();
   // lazy, put it in order that it is in tabe and sorting
-  const expectedKeys = hikeStyle === 'allhikes' ?
-    ['name', 'distance', 'difficulty', 'hikeid'].sort() : 
-    ['name', 'distance', 'hiked', 'date', 'description', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags'].sort();
-  
+  const expectedKeys = hikeStyle === 'allhikes'
+    ? ['name', 'distance', 'difficulty', 'hikeid'].sort()
+    : ['name', 'distance', 'hiked', 'date', 'description', 'difficulty', 'hikeid', 'regions', 'parks', 'trailheads', 'tags'].sort();
+
   return (keys.length === expectedKeys.length) && compareArrays(keys, expectedKeys);
 };
 
@@ -102,4 +89,4 @@ module.exports = {
   hikesMatch,
   isUser,
   usersMatch,
-}
+};
