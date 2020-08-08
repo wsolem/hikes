@@ -32,10 +32,10 @@ describe('All API Tests', () => {
           });
       });
     });
-  
+
     describe('#getHikeByHikeId', () => {
       let oneHike;
-  
+
       before('get all hikes and save', (done) => {
         requester.get('/api/hikes')
           .end((err, res) => {
@@ -46,11 +46,11 @@ describe('All API Tests', () => {
             done();
           });
       });
-  
+
       describe('correct id', () => {
         it('should get one hike', (done) => {
           const { hikeid } = oneHike;
-  
+
           requester.get(`/api/hikes/${hikeid}`)
             .end((err, res) => {
               should.not.exist(err);
@@ -63,10 +63,10 @@ describe('All API Tests', () => {
             });
         });
       });
-  
+
       describe('incorrect id', () => {
         const fakeid = 'xxxxxx';
-  
+
         it('should not return a hike', (done) => {
           requester.get(`/api/hikes/${fakeid}`)
             .end((err, res) => {
@@ -80,10 +80,10 @@ describe('All API Tests', () => {
         });
       });
     });
-  
+
     describe('#createHike', () => {
       let allHikes;
-  
+
       before('get all hikes as baseline', (done) => {
         requester.get('/api/hikes')
           .end((err, res) => {
@@ -93,7 +93,7 @@ describe('All API Tests', () => {
             done();
           });
       });
-  
+
       describe('one hike', () => {
         describe('properly formatted', () => {
           describe('should create one hike', () => {
@@ -104,7 +104,7 @@ describe('All API Tests', () => {
               distance: 4,
               difficulty: 2,
             };
-  
+
             before('save hike', (done) => {
               requester.post('/api/hikes')
                 .send(newHike)
@@ -117,18 +117,18 @@ describe('All API Tests', () => {
                   done();
                 });
             });
-  
+
             after('delete recently added hike', async () => {
               await hikesDb.deleteHikeByHikeId(hikeId);
             });
-  
+
             // take a look at what we get back from request
             it('should be successful post', () => {
               should.exist(saveResponse);
               saveResponse.status.should.equal(201);
               should.exist(hikeId);
             });
-  
+
             it('should be able to get new hike', (done) => {
               let newlyAddedHike;
               requester.get(`/api/hikes/${hikeId}`)
@@ -142,10 +142,10 @@ describe('All API Tests', () => {
                   done();
                 });
             });
-  
+
             it('should be in list of all hikes', (done) => {
               let allHikesAdded;
-  
+
               requester.get('/api/hikes')
                 .end((err, res) => {
                   should.not.exist(err);
@@ -160,7 +160,7 @@ describe('All API Tests', () => {
             });
           });
         });
-  
+
         describe('improperly formatted', () => {
           describe('missing a required field', () => {
             const hikeMissingField = {
@@ -168,7 +168,7 @@ describe('All API Tests', () => {
               difficulty: 2,
             };
             let missingFieldResult;
-  
+
             before('try to save hike', (done) => {
               requester.post('/api/hikes')
                 .send(hikeMissingField)
@@ -179,7 +179,7 @@ describe('All API Tests', () => {
                   done();
                 });
             });
-  
+
             it('should get a failure', () => {
               missingFieldResult.status.should.equal(400);
               should.exist(missingFieldResult.error);
@@ -188,7 +188,7 @@ describe('All API Tests', () => {
               // missingFieldResult.error.text.should.equal('Incorrectly formatted Hike');
               missingFieldResult.error.text.should.equal(`'${hikeMissingField.name}' creation failed`);
             });
-  
+
             it('should not be found in list of all hikes', (done) => {
               let hikes;
               requester.get('/api/hikes').then((res) => {
@@ -210,7 +210,7 @@ describe('All API Tests', () => {
               hikeid: '123lkj',
             };
             let withHikeIdRes;
-  
+
             before('try to create hike and save response', (done) => {
               requester.post('/api/hikes')
                 .send(hikeCustomId)
@@ -220,7 +220,7 @@ describe('All API Tests', () => {
                   done();
                 });
             });
-  
+
             it('should get a failed response', () => {
               withHikeIdRes.status.should.equal(400);
               should.exist(withHikeIdRes.error);
@@ -228,7 +228,7 @@ describe('All API Tests', () => {
               // withHikeIdRes.error.text.should.equal('Incorrectly formatted Hike');
               withHikeIdRes.error.text.should.equal(`'${hikeCustomId.name}' creation failed`);
             });
-  
+
             it('should not be found in list of all hikes', (done) => {
               let hikes;
               requester.get('/api/hikes').then((res) => {
@@ -241,7 +241,7 @@ describe('All API Tests', () => {
               });
             });
           });
-  
+
           describe('with field that does not exist', () => {
             const hikeNonExistantField = {
               name: 'Hike With Non-existant field',
@@ -250,7 +250,7 @@ describe('All API Tests', () => {
               blahblah: 'blahblah',
             };
             let hikeNonExistantFldRes;
-  
+
             before('try to create hike and save response', (done) => {
               requester.post('/api/hikes')
                 .send(hikeNonExistantField)
@@ -260,7 +260,7 @@ describe('All API Tests', () => {
                   done();
                 });
             });
-  
+
             it('should get a failed response', () => {
               hikeNonExistantFldRes.status.should.equal(400);
               should.exist(hikeNonExistantFldRes.error);
@@ -268,7 +268,7 @@ describe('All API Tests', () => {
               // hikeNonExistantFldRes.error.text.should.equal('Incorrectly formatted Hike');
               hikeNonExistantFldRes.error.text.should.equal(`'${hikeNonExistantField.name}' creation failed`);
             });
-  
+
             it('should not be found in list of all hikes', (done) => {
               let hikes;
               requester.get('/api/hikes').then((res) => {
@@ -283,7 +283,7 @@ describe('All API Tests', () => {
           });
         });
       });
-  
+
       describe('multiple hikes', () => {
         describe('properly formatted', () => {
           let hikeIds;
@@ -300,7 +300,7 @@ describe('All API Tests', () => {
               difficulty: 4,
             },
           ];
-  
+
           before('create hikes and save response', (done) => {
             requester.post('/api/hikes')
               .send(newHikes)
@@ -313,18 +313,18 @@ describe('All API Tests', () => {
                 done();
               });
           });
-  
+
           after('delete recently added hike', async () => {
             const deleteHikes = await hikeIds.map((hikeId) => hikesDb.deleteHikeByHikeId(hikeId));
             Promise.all(deleteHikes);
           });
-  
+
           it('should be a successful post', () => {
             should.exist(saveResponse);
             saveResponse.status.should.equal(201);
             should.exist(hikeIds);
           });
-  
+
           it('should be able to get new hikes', async () => {
             const newlySavedHikes = await hikeIds.map(async (hikeId) => requester.get(`/api/hikes/${hikeId}`));
             Promise.all(newlySavedHikes).then((hikes) => {
@@ -336,7 +336,7 @@ describe('All API Tests', () => {
               });
             });
           });
-  
+
           it('should be in list of all hikes', async () => {
             const allHikesAdded = await requester.get('/api/hikes');
             should.exist(allHikesAdded.body);
@@ -347,9 +347,8 @@ describe('All API Tests', () => {
               .every((hikeName) => allHikesAddedNames.includes(hikeName))).should.equal(true);
           });
         });
-  
+
         describe('improperly formatted', () => {
-  
           before('get all hikes and save for baseline', async () => {
             const allHikesRes = await requester.get('/api/hikes');
             allHikes = allHikesRes.body;
@@ -371,40 +370,40 @@ describe('All API Tests', () => {
             let savedResponse;
             let newHikeIds;
             let newHikeErrs;
-  
+
             before('make request and save response', async () => {
               savedResponse = await requester.post('/api/hikes')
                 .send(partiallyCompleteHikes);
               newHikeIds = savedResponse.body.hikeIds;
               newHikeErrs = savedResponse.body.hikeErrs;
             });
-  
+
             after('delete recently saved hike/s', async () => {
               await hikesDb.deleteHikeByHikeId(newHikeIds[0]);
             });
-  
+
             it('should get a successful response', () => {
               should.exist(savedResponse);
               savedResponse.status.should.equal(201);
             });
-  
+
             it('should only save correct hike', () => {
               should.exist(newHikeIds);
               newHikeIds.length.should.equal(1);
             });
-  
+
             it('should get a error response for incorrect hike', () => {
               should.exist(newHikeErrs);
               newHikeErrs.length.should.equal(1);
               newHikeErrs[0].should.equal(`'${partiallyCompleteHikes[1].name}' creation failed`);
             });
-  
+
             it('should be able to get correct hike ', async () => {
               const savedHike = await requester.get(`/api/hikes/${newHikeIds[0]}`);
               should.exist(savedHike.body[0]);
               (savedHike.body[0].name).should.equal(partiallyCompleteHikes[0].name);
             });
-  
+
             it('should have correct hike in list of all hikes', async () => {
               const allHikesAddedRes = await requester.get('/api/hikes');
               const allHikesAdded = allHikesAddedRes.body;
@@ -415,7 +414,7 @@ describe('All API Tests', () => {
               notAddedHikeNames.length.should.equal(0);
             });
           });
-  
+
           describe('one correct, other with nonexistant fields', () => {
             const partiallyCompleteHikes = [
               {
@@ -433,40 +432,40 @@ describe('All API Tests', () => {
             let savedResponse;
             let newHikeErrs;
             let newHikeIds;
-  
+
             before('make request and save response', async () => {
               savedResponse = await requester.post('/api/hikes')
                 .send(partiallyCompleteHikes);
               newHikeIds = savedResponse.body.hikeIds;
               newHikeErrs = savedResponse.body.hikeErrs;
             });
-  
+
             after('delete recently saved hike/s', async () => {
               await hikesDb.deleteHikeByHikeId(newHikeIds[0]);
             });
-  
+
             it('should get a successful response', () => {
               should.exist(savedResponse);
               savedResponse.status.should.equal(201);
             });
-  
+
             it('should only save correct hike', () => {
               should.exist(newHikeIds);
               newHikeIds.length.should.equal(1);
             });
-  
+
             it('should get a error response for incorrect hike', () => {
               should.exist(newHikeErrs);
               newHikeErrs.length.should.equal(1);
               newHikeErrs[0].should.equal(`'${partiallyCompleteHikes[1].name}' creation failed`);
             });
-  
+
             it('should be able to get correct hike ', async () => {
               const savedHike = await requester.get(`/api/hikes/${newHikeIds[0]}`);
               should.exist(savedHike.body[0]);
               (savedHike.body[0].name).should.equal(partiallyCompleteHikes[0].name);
             });
-  
+
             it('should have correct hike in list of all hikes', async () => {
               const allHikesAddedRes = await requester.get('/api/hikes');
               const allHikesAdded = allHikesAddedRes.body;
@@ -477,7 +476,7 @@ describe('All API Tests', () => {
               notAddedHikeNames.length.should.equal(0);
             });
           });
-  
+
           describe('only incorrect', () => {
             const incorrectHikes = [
               {
@@ -494,21 +493,21 @@ describe('All API Tests', () => {
             let savedResponse;
             let newHikeErrs;
             let newHikeIds;
-  
+
             before('make request and save response', async () => {
               savedResponse = await requester.post('/api/hikes')
                 .send(incorrectHikes);
               newHikeIds = savedResponse.body.hikeIds;
               newHikeErrs = savedResponse.body.hikeErrs;
             });
-  
+
             it('should get a failed response', () => {
               savedResponse.status.should.equal(400);
               should.not.exist(newHikeIds);
               should.exist(newHikeErrs);
               newHikeErrs.length.should.equal(incorrectHikes.length);
             });
-  
+
             it('should not change all hikes', async () => {
               const allHikesAddedRes = await requester.get('/api/hikes');
               const allHikesAdded = allHikesAddedRes.body;
@@ -521,7 +520,7 @@ describe('All API Tests', () => {
         });
       });
     });
-  
+
     describe('#updateHike', () => {
       describe('one hike', () => {
         const newHikeToSave = {
@@ -531,31 +530,31 @@ describe('All API Tests', () => {
         };
         let newHike;
         let newHikeId;
-  
+
         before('create hike to update', async () => {
           const response = await requester.post('/api/hikes').send(newHikeToSave);
           newHikeId = response.body.hikeIds[0];
           const newHikeRes = await requester.get(`/api/hikes/${newHikeId}`);
           newHike = newHikeRes.body[0];
         });
-  
+
         after('delete the update hike', async () => {
           await hikesDb.deleteHikeByHikeId(newHikeId);
         });
-  
+
         describe('one field', () => {
           describe('correctly formatted', () => {
             const updateFields = {
               distance: 11,
             };
             let updateRes;
-  
+
             before('update hike and save response', async () => {
               updateRes = await requester.put(`/api/hikes/${newHikeId}`).send(updateFields);
             });
-  
+
             after('restore original hike data', () => hikesDb.updateHike(newHikeId, { distance: newHike.distance }));
-  
+
             it('should be successful request', () => {
               should.exist(updateRes);
               updateRes.status.should.equal(201);
@@ -563,7 +562,7 @@ describe('All API Tests', () => {
               should.exist(updateRes.body.hikeId);
               updateRes.body.hikeId.should.equal(newHikeId);
             });
-  
+
             it('should return new info in new request', async () => {
               const response = await requester.get(`/api/hikes/${newHikeId}`);
               should.exist(response.body);
@@ -572,45 +571,45 @@ describe('All API Tests', () => {
               Number(updatedHike.distance).should.equal(updateFields.distance);
             });
           });
-  
+
           describe('incorrectly formatted', () => {
             describe('non existant field', () => {
               const updateFields = {
                 blahblah: 'blah',
               };
               let updateRes;
-  
+
               before('try to update hike and save response', async () => {
                 updateRes = await requester.put(`/api/hikes/${newHikeId}`).send(updateFields);
               });
-  
+
               it('should be a failure response', () => {
                 updateRes.status.should.equal(400);
                 should.exist(updateRes.text);
                 updateRes.text.should.equal('Invalid fields');
               });
-  
+
               it('should not see changes in following hike requests', async () => {
                 const response = await requester.get(`/api/hikes/${newHikeId}`);
                 const updatedHike = response.body[0];
                 should.not.exist(updatedHike.blahblah);
               });
             });
-  
+
             describe('incorrect update data', () => {
               const updateFields = {
                 distance: 'hello',
               };
               let updateRes;
-  
+
               before('try to update hike and save response', async () => {
                 updateRes = await requester.put(`/api/hikes/${newHikeId}`);
               });
-  
+
               it('should be a failure response', () => {
                 updateRes.status.should.equal(400);
               });
-  
+
               it('should not see changes in following hike requests', async () => {
                 const response = await requester.get(`/api/hikes/${newHikeId}`);
                 const updatedHike = response.body[0];
@@ -620,7 +619,7 @@ describe('All API Tests', () => {
             });
           });
         });
-  
+
         describe('multiple fields', () => {
           describe('correctly formatted', () => {
             const updateFields = {
@@ -628,20 +627,20 @@ describe('All API Tests', () => {
               difficulty: 3,
             };
             let updateRes;
-  
+
             before('update hike and save response', async () => {
               updateRes = await requester.put(`/api/hikes/${newHikeId}`).send(updateFields);
             });
-  
+
             after('restore fields', () => hikesDb.updateHike(newHikeId, { hiked: newHike.hiked, difficulty: newHike.difficulty }));
-  
+
             it('should be successful request', () => {
               should.exist(updateRes.body);
               updateRes.status.should.equal(201);
               should.exist(updateRes.body.hikeId);
               updateRes.body.hikeId.should.equal(newHikeId);
             });
-  
+
             it('should return new info in new request', async () => {
               const response = await requester.get(`/api/hikes/${newHikeId}`);
               should.exist(response.body);
@@ -652,7 +651,7 @@ describe('All API Tests', () => {
               });
             });
           });
-  
+
           describe('incorrectly formatted', () => {
             describe('one correct field, one non existant field', () => {
               const updateFields = {
@@ -660,16 +659,16 @@ describe('All API Tests', () => {
                 blahblah: 'blah',
               };
               let updateRes;
-  
+
               before('try to update hike and save response', async () => {
                 updateRes = await requester.put(`/api/hikes/${newHikeId}`).send(updateFields);
               });
-  
+
               it('should be a failure response', () => {
                 should.exist(updateRes);
                 updateRes.status.should.equal(400);
               });
-  
+
               it('should not see changes in following hike requests', async () => {
                 const response = await requester.get(`/api/hikes/${newHikeId}`);
                 const updatedHike = response.body[0];
@@ -680,23 +679,23 @@ describe('All API Tests', () => {
                 });
               });
             });
-  
+
             describe('only non-existant fields', () => {
               const updateFields = {
                 doodah: 1,
                 blahblah: 'blah',
               };
               let updateRes;
-  
+
               before('try to update hike and save response', async () => {
                 updateRes = await requester.put(`/api/hikes/${newHikeId}`).send(updateFields);
               });
-  
+
               it('should be a failure response', () => {
                 should.exist(updateRes);
                 updateRes.status.should.equal(400);
               });
-  
+
               it('should not see changes in following hike requests', async () => {
                 const response = await requester.get(`/api/hikes/${newHikeId}`);
                 const updatedHike = response.body[0];
@@ -710,7 +709,7 @@ describe('All API Tests', () => {
           });
         });
       });
-  
+
       // for now we'll just be able to update one hike at a time
       describe.skip('multiple hikes', () => {
         describe('correctly formatted', () => {});
@@ -724,13 +723,9 @@ describe('All API Tests', () => {
         });
       });
     });
-  
+
     describe('#deleteHike', () => {
       describe('one hike', () => {
-        // todo: there are some strange issues with running these tests twice
-        // and i need to make sure that it both correctly deletes
-        // and correctly re-creates
-        // maybe just renaming variables
         describe('correctly formatted', () => {
           let delResp;
           const hikeToDelete = {
@@ -741,51 +736,51 @@ describe('All API Tests', () => {
           let newHikeId;
           let newHike;
           let allHikesWithHikeToDel;
-  
+
           before('create hike to delete then get new hike to compare', async () => {
             const newHikeIdRes = await requester.post('/api/hikes').send(hikeToDelete);
             newHikeId = newHikeIdRes.body.hikeIds[0];
             const newHikeRes = await requester.get(`/api/hikes/${newHikeId}`);
-            newHike = newHikeRes.body;
+            newHike = newHikeRes.body[0];
           });
-  
+
           before('get all hikes for comparison', async () => {
             const allHikesRes = await requester.get('/api/hikes');
             allHikesWithHikeToDel = allHikesRes.body;
           });
-  
+
           before('delete hike and save response', async () => {
             delResp = await requester.delete(`/api/hikes/${newHikeId}`);
           });
-  
+
           it('should be a successful response', () => {
             should.exist(delResp);
             should.exist(delResp.status);
             delResp.status.should.equal(200);
           });
-  
+
           it('should get deleted hike in response', () => {
             should.exist(delResp.body);
             delResp.body.should.be.a('array');
             delResp.body.length.should.equal(1);
             delResp.body[0].should.equal(newHikeId);
           });
-  
+
           it('should not be able to get deleted hike directly', async () => {
             const deletedHikeRes = await requester.get(`/api/hikes/${newHikeId}`);
             should.exist(deletedHikeRes);
             deletedHikeRes.status.should.equal(404);
           });
-  
+
           it('should not be in list of all hikes', async () => {
             const allHikesAfterDelRes = await requester.get('/api/hikes');
             (allHikesWithHikeToDel.length).should.not.equal(allHikesAfterDelRes.body.length);
             (allHikesWithHikeToDel.length).should.equal(allHikesAfterDelRes.body.length + 1);
-            const hasHike = allHikesAfterDelRes.body.filter((hike) => hike.hikeid === newHikeId);
+            const hasHike = allHikesAfterDelRes.body.filter((hike) => hike.name === newHike.name);
             hasHike.length.should.equal(0);
           });
         });
-  
+
         describe('incorrectly formatted', () => {
           const hikeToDelete = {
             name: 'Try to Delete Me',
@@ -795,42 +790,44 @@ describe('All API Tests', () => {
           let newHike;
           let newHikeId;
           let allHikesWithHikeToDel;
-  
+
           before('create hike to delete then get new hike to compare', async () => {
             const newHikeIdRes = await requester.post('/api/hikes').send(hikeToDelete);
             newHikeId = newHikeIdRes.body.hikeIds[0];
             const newHikeRes = await requester.get(`/api/hikes/${newHikeId}`);
-            newHike = newHikeRes.body; // test this?
+            newHike = newHikeRes.body[0];
           });
-  
+
           before('get all hikes for comparison', async () => {
             const allHikesRes = await requester.get('/api/hikes');
             allHikesWithHikeToDel = allHikesRes.body;
           });
-  
+
           after('delete extra hike', async () => {
             await hikesDb.deleteHikeByHikeId(newHikeId);
           });
-  
+
           describe('with non-existant hike id', () => {
             const nonExHikeId = 'zyzzx';
             let delHikeRes;
-  
+
             before('try to delete hike and save response', async () => {
               delHikeRes = await requester.delete(`/api/hikes/${nonExHikeId}`);
             });
-  
+
             it('should not get a successful response', () => {
               should.exist(delHikeRes);
               delHikeRes.status.should.equal(404);
             });
-  
+
             it('should not change list of all hikes', async () => {
               const allHikesAfterDelRes = await requester.get('/api/hikes');
               allHikesWithHikeToDel.length.should.equal(allHikesAfterDelRes.body.length);
+              const newHikeInList = (allHikesAfterDelRes.body).filter((hike) => hike.name === newHike.name);
+              newHikeInList.length.should.equal(1);
             });
           });
-  
+
           describe.skip('with extra data sent', () => {
             // this is a placeholder
             // at some point will want to change the delete function to delete by sending it in the body
@@ -840,37 +837,37 @@ describe('All API Tests', () => {
       // todo: future functionality
       describe.skip('multiple hikes', () => {
         describe('correctly formatted', () => {
-  
+
         });
         describe('incorrectly formatted', () => {
           describe('one non-existant id out of multiple', () => {
-  
+
           });
           describe('all non-existant ids', () => {
-  
+
           });
         });
       });
     });
   });
-  
+
   // users tests
-  describe('Users', () => {  
+  describe('Users', () => {
     // todo: add tests for allUsers restrictions by usertype
     describe('#allUsers', () => {
       let allUsersRes;
       let allUsers;
-  
+
       before('get all users and save object', async () => {
         allUsersRes = await requester.get('/api/users');
         allUsers = allUsersRes.body;
       });
-  
+
       it('should be a successful response', () => {
         should.exist(allUsersRes);
         allUsersRes.status.should.equal(200);
       });
-  
+
       it('should return all users', () => {
         should.exist(allUsers);
         allUsers.should.be.an('array');
@@ -878,32 +875,32 @@ describe('All API Tests', () => {
         allUsers.map((user) => (helperFs.isUser(user, 'allUsers')).should.equal(true));
       });
     });
-  
+
     describe('#getUserById', () => {
       describe('successful', () => {
         let allUsers;
         let userFromAll;
         let userByIdRes;
         let userById;
-  
+
         before('get all users as baseline and save user for comparison', async () => {
           const allUsersRes = await requester.get('/api/users');
           allUsers = allUsersRes.body;
           userFromAll = allUsers[0];
         });
-  
+
         before('get user by id and save', async () => {
           userByIdRes = await requester.get(`/api/users/${userFromAll.userid}`);
           userById = userByIdRes.body[0];
         });
-  
+
         it('should have a succesful response', () => {
           should.exist(userByIdRes);
           userByIdRes.status.should.equal(200);
           should.exist(userByIdRes.body);
           userByIdRes.body.length.should.equal(1);
         });
-  
+
         it('should be a matching user', () => {
           should.exist(userById);
           should.exist(userById.firstname);
@@ -916,30 +913,30 @@ describe('All API Tests', () => {
           userById.username.should.equal(userFromAll.username);
         });
       });
-  
+
       describe('non-existant id', () => {
         const fakeId = 'fakeid';
         let fakeIdRes;
-  
+
         before('try to get user and save response', async () => {
           fakeIdRes = await requester.get(`/api/users/${fakeId}`);
         });
-  
+
         it('should not be a successful response', () => {
           should.exist(fakeIdRes);
           fakeIdRes.status.should.equal(404);
         });
       });
     });
-  
+
     describe('#createUser', () => {
       let allUsers;
-  
+
       before('get all users for comparison', async () => {
         const allUsersRes = await requester.get('/api/users');
         allUsers = allUsersRes.body;
       });
-  
+
       describe('successful user', () => {
         const newUserSetup = {
           username: 'lindab',
@@ -949,22 +946,23 @@ describe('All API Tests', () => {
           usertype: 'paid',
         };
         let createdUserRes;
-  
+        let newUser;
+
         before('create user and save result', async () => {
           createdUserRes = await requester.post('/api/users').send(newUserSetup);
         });
-  
+
         after('delete new user', async () => {
           await usersDb.deleteUser(createdUserRes.body.userid);
         });
-  
+
         it('should be successful', () => {
           should.exist(createdUserRes);
           createdUserRes.status.should.equal(201);
           should.exist(createdUserRes.body);
           should.exist(createdUserRes.body.userid);
         });
-  
+
         it('should be able to get new user', async () => {
           const newUserRes = await requester.get(`/api/users/${createdUserRes.body.userid}`);
           newUser = newUserRes.body[0];
@@ -974,7 +972,7 @@ describe('All API Tests', () => {
           const misMatchedFields = setupKeys.filter((key) => newUserSetup[key] !== newUser[key]);
           misMatchedFields.length.should.equal(0);
         });
-  
+
         it('should be in all users', async () => {
           const allUsersWithNewRes = await requester.get('/api/users');
           const allUsersWithNew = allUsersWithNewRes.body;
@@ -983,7 +981,7 @@ describe('All API Tests', () => {
           hasNew.length.should.equal(1);
         });
       });
-  
+
       describe('missing field/s', () => {
         const newUserSetup = {
           username: 'BobB',
@@ -992,18 +990,18 @@ describe('All API Tests', () => {
           email: 'bob@bobs.com',
         };
         let createUserRes;
-  
+
         before('try to create user and save response', async () => {
           createUserRes = await requester.post('/api/users').send(newUserSetup);
         });
-  
+
         it('should be an failure response', () => {
           should.exist(createUserRes);
           createUserRes.status.should.equal(400);
           should.exist(createUserRes.text);
           createUserRes.text.should.equal(`User ${newUserSetup.username} not created`);
         });
-  
+
         it('should not change list of all users', async () => {
           const allUsersAfterCreateRes = await requester.get('/api/users');
           const allUsersAfterCreate = allUsersAfterCreateRes.body;
@@ -1012,7 +1010,7 @@ describe('All API Tests', () => {
           hasCreatedUser.length.should.equal(0);
         });
       });
-  
+
       describe('non-existant field/s', () => {
         const newUserSetup = {
           username: 'BobB',
@@ -1023,18 +1021,18 @@ describe('All API Tests', () => {
           fakeField: 'this field should not exist',
         };
         let createUserRes;
-  
+
         before('try to create user and save response', async () => {
           createUserRes = await requester.post('/api/users').send(newUserSetup);
         });
-  
+
         it('should be an failure response', () => {
           should.exist(createUserRes);
           createUserRes.status.should.equal(400);
           should.exist(createUserRes.text);
           createUserRes.text.should.equal(`User ${newUserSetup.username} not created`);
         });
-  
+
         it('should not change list of all users', async () => {
           const allUsersAfterCreateRes = await requester.get('/api/users');
           const allUsersAfterCreate = allUsersAfterCreateRes.body;
@@ -1043,7 +1041,7 @@ describe('All API Tests', () => {
           hasCreatedUser.length.should.equal(0);
         });
       });
-  
+
       describe('invalid field value/s', () => {
         const newUserSetup = {
           username: 'BobB',
@@ -1053,18 +1051,18 @@ describe('All API Tests', () => {
           usertype: 123,
         };
         let createUserRes;
-  
+
         before('try to create user and save response', async () => {
           createUserRes = await requester.post('/api/users').send(newUserSetup);
         });
-  
+
         it('should be an failure response', () => {
           should.exist(createUserRes);
           createUserRes.status.should.equal(400);
           should.exist(createUserRes.text);
           createUserRes.text.should.equal(`User ${newUserSetup.username} not created`);
         });
-  
+
         it('should not change list of all users', async () => {
           const allUsersAfterCreateRes = await requester.get('/api/users');
           const allUsersAfterCreate = allUsersAfterCreateRes.body;
@@ -1073,7 +1071,7 @@ describe('All API Tests', () => {
           hasCreatedUser.length.should.equal(0);
         });
       });
-  
+
       describe('empty field/s', () => {
         const newUserSetup = {
           username: 'BobB',
@@ -1083,18 +1081,18 @@ describe('All API Tests', () => {
           usertype: '',
         };
         let createUserRes;
-  
+
         before('try to create user and save response', async () => {
           createUserRes = await requester.post('/api/users').send(newUserSetup);
         });
-  
+
         it('should be an failure response', () => {
           should.exist(createUserRes);
           createUserRes.status.should.equal(400);
           should.exist(createUserRes.text);
           createUserRes.text.should.equal(`User ${newUserSetup.username} not created`);
         });
-  
+
         it('should not change list of all users', async () => {
           const allUsersAfterCreateRes = await requester.get('/api/users');
           const allUsersAfterCreate = allUsersAfterCreateRes.body;
@@ -1113,18 +1111,18 @@ describe('All API Tests', () => {
           usertype: 'paid',
         };
         let createUserRes;
-  
+
         before('try to create user and save response', async () => {
           createUserRes = await requester.post('/api/users').send(newUserSetup);
         });
-  
+
         it('should be an failure response', () => {
           should.exist(createUserRes);
           createUserRes.status.should.equal(400);
           should.exist(createUserRes.text);
           createUserRes.text.should.equal(`User ${newUserSetup.username} not created`);
         });
-  
+
         it('should not change list of all users', async () => {
           const allUsersAfterCreateRes = await requester.get('/api/users');
           const allUsersAfterCreate = allUsersAfterCreateRes.body;
@@ -1134,10 +1132,10 @@ describe('All API Tests', () => {
         });
       });
     });
-  
+
     describe.skip('#deleteUser', () => {
     });
-  
+
     describe.skip('#updateUser', () => {
     });
   });

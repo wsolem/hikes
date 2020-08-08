@@ -44,7 +44,7 @@ describe('Hikes', () => {
 
     it('should be an array of hikes', (done) => {
       allHikes.should.be.an('array');
-      allHikes.forEach(hike => (helperFs.isHike((hike), 'allhikes')).should.equal(true));
+      allHikes.forEach((hike) => (helperFs.isHike((hike), 'allhikes')).should.equal(true));
       done();
     });
   });
@@ -693,30 +693,6 @@ describe('Users', () => {
           (helperFs.usersMatch(userToUpdateCtrd, updatedUser)).should.equal(true);
         });
       });
-
-      // this doesn't work as expected - but this type of check will be done in the service layser
-      describe.skip('wrong type of data for field', () => {
-        let updateUserRes;
-        const updateField = {
-          username: 123,
-        };
-
-        before('update and save response', async () => {
-          updateUserRes = await usersDb.updateUser(userToUpdate.userid, updateField);
-        });
-
-        it('should show a successful call', () => {
-          should.exist(updateUserRes);
-          updateUserRes.should.equal(1);
-        });
-
-        it('should not have changed user object', async () => {
-          const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
-          const updatedUser = updatedUserArr[0];
-          userToUpdateCtrd.username.should.equal(updatedUser.username);
-          updatedUser.username.should.not.equal(updateField.username);
-        });
-      });
     });
     // I'm pretty sure these tests are incomplete
     describe('multiple fields', () => {
@@ -742,15 +718,31 @@ describe('Users', () => {
           (helperFs.usersMatch(updatedUser, userToUpdateCtrd)).should.equal(true);
         });
       });
-      // what? there are no tests here?
+
       describe('all non-existant fields', () => {
-        let updatedUserRes;
-        const updateField = {
+        let updatedUser;
+        let updateRet;
+        const updateFields = {
           blahblah: 'blahblahblah',
           blah: 123,
         };
+
+        before('try to update and save return', async () => {
+          updateRet = await usersDb.updateUser(userToUpdate.userid, updateFields);
+        });
+
+        it('should get a return indicating that nothing was updated', () => {
+          should.exist(updateRet);
+          updateRet.should.be.an.instanceOf(Error);
+        });
+
+        it('should not have changed user', async () => {
+          const updatedUserArr = await usersDb.getUserById(userToUpdate.userid);
+          updatedUser = updatedUserArr[0];
+          (helperFs.usersMatch(updatedUser, userToUpdateCtrd)).should.equal(true);
+        });
       });
-  
+
       describe('all updateable fields', () => {
         let updateUserRes;
         const updateFields = {
@@ -803,7 +795,7 @@ describe.skip('Lists', () => {
         it('should return a list associated wiht user id', () => {
 
         });
-  
+
         it('should contain correct list data', () => {
           // list id
           // list name
@@ -812,11 +804,12 @@ describe.skip('Lists', () => {
           // other users associated with list
         });
       });
+
       describe('user does not own list', () => {
         before('request list that user does not own and save response', () => {
 
         });
-         // todo: correct response info
+        // todo: correct response info
         it('should have a successful 2xx response', () => {
 
         });
@@ -833,6 +826,7 @@ describe.skip('Lists', () => {
 
       });
     });
+
     describe('user does not have any lists', () => {
       before('make request and save response', () => {
 
