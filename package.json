@@ -22,7 +22,7 @@
     "sinon": "^9.0.2"
   },
   "scripts": {
-    "test": "mocha --exit",
+    "test": "mocha --recursive --exit",
     "start": "node server.js",
     "init:database": "npx knex migrate:latest --env test",
     "test:seed": "npx knex seed:run --env test",
